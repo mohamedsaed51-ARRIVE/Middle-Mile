@@ -153,7 +153,7 @@ svg text{font-family:var(--ar);font-size:11px;fill:var(--mut)}
 .rpt{position:fixed;inset:0;z-index:3000;background:#CBD5E1;overflow:auto;direction:rtl;font-family:'Cairo',system-ui,sans-serif;color:#0F172A}
 .rp-tool{position:sticky;top:0;z-index:2;background:#0F172A;color:#fff;padding:10px 20px;display:flex;gap:10px;align-items:center}
 .rp-tool .btn{background:#fff;color:#0F172A}.rp-tool span{margin-inline-start:auto;font-size:12px;opacity:.8}
-.rp-page{width:210mm;min-height:297mm;margin:16px auto;background:#fff;padding:14mm 14mm 12mm;box-shadow:0 4px 20px rgba(15,23,42,.25);font-size:11.5px;line-height:1.7}
+.rp-page{position:relative;width:210mm;height:297mm;overflow:hidden;margin:16px auto;background:#fff;padding:12mm 14mm 0;box-shadow:0 4px 20px rgba(15,23,42,.25);font-size:11.5px;line-height:1.7}
 .rp-page h1{font-size:21px;margin:0 0 2px;color:#0837C9}.rp-page h2{font-size:14px;margin:14px 0 6px;color:#0837C9;border-inline-start:4px solid #00C7E6;padding-inline-start:8px}
 .rp-page .rp-sub{color:#475569;font-size:12px}.rp-page table{width:100%;border-collapse:collapse;margin:4px 0 8px;font-size:10.5px}
 .rp-page th{background:#0F172A;color:#fff;padding:5px 7px;text-align:start;font-size:10px;cursor:default;position:static;white-space:normal}
@@ -162,9 +162,15 @@ svg text{font-family:var(--ar);font-size:11px;fill:var(--mut)}
 .rp-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0}.rp-kpi{border:1px solid #CBD5E1;border-radius:8px;padding:7px 9px}
 .rp-kpi b{display:block;font:700 17px 'Inter',sans-serif;direction:ltr;text-align:end}.rp-kpi span{font-size:10px;color:#475569}
 .rp-note{background:#FEF3C7;border:1px solid #F59E0B;border-radius:8px;padding:7px 10px;font-size:10.5px}
-.rp-foot{margin-top:10px;font-size:9.5px;color:#64748B;border-top:1px solid #E2E8F0;padding-top:5px}
+.rp-body{height:calc(297mm - 12mm - 16mm);overflow:hidden}.rp-foot{position:absolute;bottom:7mm;inset-inline:14mm;font-size:9.5px;color:#64748B;border-top:1px solid #E2E8F0;padding-top:4px}
+.rp-hd{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #00C7E6;padding-bottom:8px}
+.rp-off{position:fixed;left:-10000px;top:0;direction:rtl;font-family:'Cairo',system-ui,sans-serif;color:#0F172A}.rp-off .rp-page{margin:0;box-shadow:none}
+.mdl{position:fixed;inset:0;z-index:2500;background:rgba(15,23,42,.55);display:grid;place-items:center;padding:16px}
+.mdb{background:var(--card);color:var(--ink);border-radius:var(--rl);box-shadow:var(--raised);padding:20px 22px;width:min(520px,100%);max-height:90vh;overflow:auto}.mdb h3{margin:0 0 2px}
+.mdl-l{display:grid;gap:6px;margin:12px 0}.mdl-l label{display:flex;gap:8px;align-items:center;padding:6px 8px;border-radius:8px;cursor:pointer}.mdl-l label:hover{background:var(--accent-soft)}.mdl-l input{width:16px;height:16px;accent-color:var(--blue)}
+.mdl-a{display:flex;gap:8px;flex-wrap:wrap}.mdl-a .btn{height:38px}.btn.pri{background:var(--blue);color:#fff;border-color:var(--blue)}.btn.pri:hover{background:var(--blue-700);color:#fff}
 @media print{.cbar{display:none!important}}
-@media print{@page{size:A4;margin:0}body.rp-open>*:not(#rpt){display:none!important}#rpt{position:static!important;background:#fff!important;overflow:visible!important}.rp-tool{display:none!important}.rp-page{margin:0!important;box-shadow:none!important;width:auto;min-height:0;page-break-after:always;-webkit-print-color-adjust:exact;print-color-adjust:exact}.rp-page:last-child{page-break-after:auto}}
+@media print{body.rp-open{padding:0!important;margin:0!important;background:#fff!important}@page{size:A4;margin:0}body.rp-open>*:not(#rpt){display:none!important}#rpt{position:static!important;background:#fff!important;overflow:visible!important}.rp-tool{display:none!important}.rp-page{margin:0!important;box-shadow:none!important;width:210mm;page-break-after:always;height:296mm;-webkit-print-color-adjust:exact;print-color-adjust:exact}.rp-page:last-child{page-break-after:auto}}
 </style>
 <div dir="rtl" lang="ar">
 <header class="top"><div class="in">
@@ -576,45 +582,101 @@ render=function(){_render();
  const AL=renderAlerts(rs);renderHealth(rs);renderCharts(rs);renderActions(rs,AL);renderInsights(rs);renderTop(rs);renderDetail(rs)};
 $("rs").addEventListener("click",()=>{F.x=null;DT.q="";DT.p=0;render()});
 
-/* ---- التقرير الإداري A4 ---- */
+/* ---- التقرير الإداري A4: اختيار الأقسام + ترقيم تلقائي للصفحات + PDF مباشر ---- */
 function periodTxt(rs){const ds=rs.map(o=>o.d).sort();return ds.length?`${ds[0]} إلى ${ds[ds.length-1]}`:"–"}
 function filtTxt(){const p=[];KEYS.forEach(k=>F[k].forEach(v=>p.push(`${lab[k]}: ${k==="m"?MN[v-1]:k==="s"?ST[v]:v}`)));if(F.from)p.push("من "+F.from);if(F.to)p.push("إلى "+F.to);if(F.x)p.push("تنبيه: "+F.x.label);return p.length?p.join(" · "):"بدون فلاتر (كل البيانات)"}
-function tbl(h,b,num){return`<table><thead><tr>${h.map(x=>`<th>${x}</th>`).join("")}</tr></thead><tbody>${b.map(r=>`<tr>${r.map((c,i)=>`<td class="${num&&num.includes(i)?"n":""}">${c}</td>`).join("")}</tr>`).join("")}</tbody></table>`}
 function reportData(){
  const rs=rows(),S=st(rs),H=health(S),AL=computeAlerts(rs),AC=computeActions(rs,AL),pw=prevWindow(rs);
  let P=null,T=null;if(pw){const pr=inR(rows(true),pw.a,pw.b);if(pr.length){P=st(pr);T=cmpRows(P,S)}}
- return{rs,S,H,AL,AC,pw,P,T,fleet:grp(rs,line),br:grp(rs,o=>o.b),dr:grp(rs,o=>o.dr).filter(a=>a.k!==NRS)}}
-function openReport(){
- const D=reportData();if(!D.rs.length){alert("لا توجد بيانات مطابقة للفلاتر الحالية");return}
- const{rs,S,H,AL,AC,T,pw}=D,logo=document.querySelector(".brand img"),today=new Date().toISOString().slice(0,10);
+ return{rs,S,H,AL,AC,pw,P,T,fleet:grp(rs,line),br:grp(rs,o=>o.b),dr:grp(rs,o=>o.dr).filter(a=>a.k!==NRS),vh:grp(rs,o=>o.vt).filter(a=>a.k!==NRS)}}
+const REPSEC=[["branches","أداء الفروع"],["fleet","هيكلة الأسطول وخطوط التشغيل"],["drivers","أداء السائقين"],["vehicles","أنواع المركبات"],["compare","المقارنة بالفترة السابقة"],["findings","التنبيهات والإجراءات المقترحة"]];
+const ORD=["أولًا","ثانيًا","ثالثًا","رابعًا","خامسًا","سادسًا","سابعًا","ثامنًا","تاسعًا","عاشرًا"];
+const thead=h=>`<thead><tr>${h.map(x=>`<th>${x}</th>`).join("")}</tr></thead>`;
+const trow=(r,num)=>`<tr>${r.map((c,i)=>`<td class="${num&&num.includes(i)?"n":""}">${c}</td>`).join("")}</tr>`;
+/* يبني قائمة كتل: html عادي أو جدول قابل للتقسيم بين الصفحات */
+function reportBlocks(D,sel){
+ const{rs,S,H,AL,AC,T,pw}=D,logo=document.querySelector(".brand img"),today=new Date().toISOString().slice(0,10),B=[],H2=t=>`<h2>${t}</h2>`;let n=0;const ord=()=>ORD[n++];
  const kp=[["إجمالي الأوردرات",fmt(S.sh)],["إجمالي الشوالات",fmt(S.bg)],["أيام التشغيل",fmt(S.days)],["متوسط أوردر/يوم",fmt(S.perDay)],["فروع مشمولة",fmt(S.br)],["نسبة تسجيل الخروج",pc(S.rec)],["نسبة التأخير",pc(S.lr)],["درجة صحة التشغيل",H?H.score+" / 100":"–"]];
  const crit=AL.filter(a=>a.n&&(a.p==="crit"||a.p==="high"));
  const exec=[`خلال الفترة ${periodTxt(rs)} بلغ إجمالي الأوردرات ${fmt(S.sh)} و${fmt(S.bg)} شوال عبر ${fmt(S.br)} فرعًا و${fmt(D.fleet.length)} خط تشغيل.`,
   `نسبة تسجيل وقت الخروج ${pc(S.rec)}، ونسبة التأخير ${pc(S.lr)} من ${fmt(S.meas)} صف مقاس (حد التأخير ${F.th} دقيقة).`,
   T?`مقارنة بالفترة المماثلة السابقة (${pw.a} إلى ${pw.b}): الأوردرات ${fmt(D.P.sh)} → ${fmt(S.sh)}، ونسبة التأخير ${pc(D.P.lr)} → ${pc(S.lr)}.`:"لا توجد بيانات للفترة السابقة المماثلة داخل الشيت للمقارنة.",
   crit.length?`تنبيهات تحتاج متابعة: ${crit.map(a=>a.t.replace(/\s*\(.*\)$/,"")).join("؛ ")}.`:"لا توجد تنبيهات حرجة أو مرتفعة وفق العتبات المقترحة."];
- const r=document.createElement("div");r.id="rpt";r.className="rpt";
- const foot=(n)=>`<div class="rp-foot">ARRIVE · إدارة المراجعة التشغيلية · تقرير الميدل مايل · أُصدر ${today} · صفحة ${n}</div>`;
- r.innerHTML=`<div class="rp-tool"><button class="btn" id="rpp" type="button">طباعة / حفظ PDF</button><button class="btn" id="rpx" type="button">إغلاق</button><span>صيغة A4 — اختر «حفظ كـ PDF» من نافذة الطباعة</span></div>
- <div class="rp-page"><div style="display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #00C7E6;padding-bottom:8px"><div><h1>تقرير متابعة الميدل مايل</h1><div class="rp-sub">الفترة: ${periodTxt(rs)} · تاريخ الإصدار: ${today}</div></div>${logo?`<img src="${logo.src}" style="height:42px;background:#0837C9;padding:6px 10px;border-radius:6px">`:""}</div>
- <h2>أولًا: المقدمة والهدف</h2><p>يعرض التقرير حجم الأوردرات والشوالات المنقولة بين المركز الرئيسي والفروع، والالتزام بمواعيد الخروج، وهيكلة الأسطول (خطوط التشغيل والسائقون والمركبات)، بهدف دعم قرارات الإدارة التشغيلية.</p>
- <h2>ثانيًا: النطاق</h2><p>مصدر البيانات: شيت «le MiddMile Report 01» (ورقة Daily pickup). الفلاتر المطبقة: ${esc(filtTxt())}. السجلات: ${fmt(rs.length)} صف فرع-يوم.</p>
- <h2>ثالثًا: الملخص التنفيذي</h2><ul>${exec.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
- <h2>رابعًا: المؤشرات الرئيسية</h2><div class="rp-kpis">${kp.map(k=>`<div class="rp-kpi"><b>${k[1]}</b><span>${k[0]}</span></div>`).join("")}</div>
- ${H?`<p>تفصيل درجة الصحة (أوزان مقترحة غير معتمدة): ${H.f.map(f=>`${f.l} ${f.v==null?"غير متاح":n1(f.v)} (وزن ${Math.round(f.w*100)}%)`).join(" · ")}.</p>`:""}
- ${foot(1)}</div>
- <div class="rp-page"><h2>خامسًا: أداء الفروع</h2>${tbl(["الفرع","الأوردرات","الشوالات","أيام التشغيل","السائقون","% التأخير","% التسجيل"],D.br.map(a=>{const s=st(rs.filter(o=>o.b===a.k));return[esc(shortB(a.k)),fmt(a.sh),fmt(a.bg),fmt(a.days.size),esc([...a.dr].join("، ")),pc(s.lr),pc(s.rec)]}),[1,2,3,5,6])}
- <h2>سادسًا: هيكلة الأسطول وخطوط التشغيل</h2>${tbl(["خط التشغيل","الفروع المغطاة","الأوردرات","الشوالات","أيام التشغيل"],D.fleet.map(a=>[esc(a.k),esc(brs(a)),fmt(a.sh),fmt(a.bg),fmt(a.days.size)]),[2,3,4])}
- ${foot(2)}</div>
- <div class="rp-page"><h2>سابعًا: أداء السائقين</h2>${tbl(["السائق","المركبات","الأوردرات","الشوالات","أيام التشغيل","% التأخير"],D.dr.slice(0,15).map(a=>{const s=st(rs.filter(o=>o.dr===a.k));return[esc(a.k),esc([...a.vt].join("، ")),fmt(a.sh),fmt(a.bg),fmt(a.days.size),pc(s.lr)]}),[2,3,4,5])}
- ${T?`<h2>ثامنًا: المقارنة بالفترة السابقة (${pw.a} إلى ${pw.b})</h2>${tbl(["المؤشر","السابقة","الحالية","الفرق"],T.map(x=>[x.l,cv(x.a,x.d,x.t),cv(x.b,x.d,x.t),x.df==null?"–":(x.df>0?"+":"")+(x.t==="p"?n1(x.df)+" نقطة":x.d?n1(x.df):fmt(x.df))]),[1,2,3])}`:""}
- <h2>${T?"تاسعًا":"ثامنًا"}: النتائج والإجراءات المقترحة</h2>${tbl(["م","الملاحظة","الأولوية","الإجراء المقترح","الجهة (مقترحة)","الموعد"],AC.map((a,i)=>[i+1,esc(a.d),PR[a.p][0],esc(a.t),esc(a.o),"بقرار الإدارة"])||[])}
- ${AC.length?"":"<p>لا توجد إجراءات مقترحة وفق البيانات المعروضة.</p>"}
- <h2>الخاتمة</h2><p>تعكس النتائج أعلاه البيانات المسجلة في الشيت وقت الإصدار. الإجراءات والجهات المسؤولة مقترحة وتحتاج اعتماد الإدارة.</p>
- <div class="rp-note"><b>افتراضات وقيود:</b> التأخير = وقت الخروج الفعلي − المخطط (حد ${F.th} دقيقة، غير معتمد من SOP). القيم 0:00 / 0 / - تُعامل «غير مسجّل»، والسبت/ترانزيت خارج الحساب. الصفوف المكررة (نفس اليوم والفرع) محسوبة كلها (${fmt(S.dup)} صف). خط التشغيل = نوع المركبة – السائق. أوزان درجة الصحة وعتبات التنبيه (25% / 30%) مقترحة وغير معتمدة.</div>
- ${foot(3)}</div>`;
- document.body.appendChild(r);document.body.classList.add("rp-open");
- $("rpx").onclick=()=>{r.remove();document.body.classList.remove("rp-open")};$("rpp").onclick=()=>window.print()}
+ B.push({h:`<div class="rp-hd"><div><h1>تقرير متابعة الميدل مايل</h1><div class="rp-sub">الفترة: ${periodTxt(rs)} · تاريخ الإصدار: ${today}</div></div>${logo?`<img src="${logo.src}" style="height:42px;background:#0837C9;padding:6px 10px;border-radius:6px">`:""}</div>`+
+  H2(ord()+": المقدمة والهدف")+`<p>يعرض التقرير حجم الأوردرات والشوالات المنقولة بين المركز الرئيسي والفروع، والالتزام بمواعيد الخروج، وهيكلة الأسطول (خطوط التشغيل والسائقون والمركبات)، بهدف دعم قرارات الإدارة التشغيلية.</p>`+
+  H2(ord()+": النطاق")+`<p>مصدر البيانات: شيت «le MiddMile Report 01» (ورقة Daily pickup). الفلاتر المطبقة: ${esc(filtTxt())}. السجلات: ${fmt(rs.length)} صف فرع-يوم.</p>`+
+  H2(ord()+": الملخص التنفيذي")+`<ul>${exec.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`+
+  H2(ord()+": المؤشرات الرئيسية")+`<div class="rp-kpis">${kp.map(k=>`<div class="rp-kpi"><b>${k[1]}</b><span>${k[0]}</span></div>`).join("")}</div>`+
+  (H?`<p>تفصيل درجة الصحة (أوزان مقترحة غير معتمدة): ${H.f.map(f=>`${f.l} ${f.v==null?"غير متاح":n1(f.v)} (وزن ${Math.round(f.w*100)}%)`).join(" · ")}.</p>`:"")});
+ const tb=(t,head,body,num)=>B.push({t:ord()+": "+t,head,rows:body,num});
+ if(sel.has("branches"))tb("أداء الفروع",["الفرع","الأوردرات","الشوالات","أيام التشغيل","السائقون","% التأخير","% التسجيل"],D.br.map(a=>{const s=st(rs.filter(o=>o.b===a.k));return[esc(shortB(a.k)),fmt(a.sh),fmt(a.bg),fmt(a.days.size),esc([...a.dr].join("، ")),pc(s.lr),pc(s.rec)]}),[1,2,3,5,6]);
+ if(sel.has("fleet"))tb("هيكلة الأسطول وخطوط التشغيل",["خط التشغيل","الفروع المغطاة","الأوردرات","الشوالات","أيام التشغيل"],D.fleet.map(a=>[esc(a.k),esc(brs(a)),fmt(a.sh),fmt(a.bg),fmt(a.days.size)]),[2,3,4]);
+ if(sel.has("drivers"))tb("أداء السائقين",["السائق","المركبات","الفروع المغطاة","الأوردرات","الشوالات","أيام التشغيل","متوسط/يوم","% التأخير"],D.dr.map(a=>{const s=st(rs.filter(o=>o.dr===a.k));return[esc(a.k),esc([...a.vt].join("، ")),esc(brs(a)),fmt(a.sh),fmt(a.bg),fmt(a.days.size),a.days.size?fmt(a.sh/a.days.size):"–",pc(s.lr)]}),[3,4,5,6,7]);
+ if(sel.has("vehicles"))tb("أنواع المركبات",["نوع المركبة","السائقون","الفروع المغطاة","الأوردرات","الشوالات","أيام التشغيل","% من الأوردرات"],D.vh.map(a=>[esc(a.k),esc([...a.dr].join("، ")),esc(brs(a)),fmt(a.sh),fmt(a.bg),fmt(a.days.size),pc(S.sh?a.sh/S.sh*100:null)]),[3,4,5,6]);
+ if(sel.has("compare")){if(T)tb(`المقارنة بالفترة السابقة (${pw.a} إلى ${pw.b})`,["المؤشر","السابقة","الحالية","الفرق"],T.map(x=>[x.l,cv(x.a,x.d,x.t),cv(x.b,x.d,x.t),x.df==null?"–":(x.df>0?"+":"")+(x.t==="p"?n1(x.df)+" نقطة مئوية":x.d?n1(x.df):fmt(x.df))]),[1,2,3]);
+  else B.push({h:H2(ord()+": المقارنة بالفترة السابقة")+"<p>لا توجد بيانات داخل الشيت للفترة السابقة المماثلة.</p>"})}
+ if(sel.has("findings")){const al=AL.filter(a=>a.n);
+  tb("التنبيهات",["الأولوية","التنبيه","العدد"],al.map(a=>[PR[a.p][0],esc(a.t),fmt(a.n)]),[2]);
+  if(!al.length)B[B.length-1]={h:H2(B[B.length-1].t)+"<p>لا توجد تنبيهات وفق العتبات المقترحة.</p>"};
+  if(AC.length)B.push({t:"الإجراءات المقترحة (الجهات مقترحة وغير معتمدة)",head:["م","الملاحظة","الأولوية","الإجراء المقترح","الجهة","الموعد"],rows:AC.map((a,i)=>[i+1,esc(a.d),PR[a.p][0],esc(a.t),esc(a.o),"بقرار الإدارة"]),num:[0]})}
+ B.push({h:H2("الخاتمة")+`<p>تعكس النتائج أعلاه البيانات المسجلة في الشيت وقت الإصدار. الإجراءات والجهات المسؤولة مقترحة وتحتاج اعتماد الإدارة.</p><div class="rp-note"><b>افتراضات وقيود:</b> التأخير = وقت الخروج الفعلي − المخطط (حد ${F.th} دقيقة، غير معتمد من SOP). القيم 0:00 / 0 / - تُعامل «غير مسجّل»، والسبت/ترانزيت خارج الحساب. الصفوف المكررة (نفس اليوم والفرع) محسوبة كلها (${fmt(S.dup)} صف). خط التشغيل = نوع المركبة – السائق. أوزان درجة الصحة وعتبات التنبيه (25% / 30%) مقترحة وغير معتمدة.</div>`});
+ return B}
+/* يوزّع الكتل على صفحات A4 ثابتة بالقياس الفعلي ويقسّم الجداول الطويلة مع تكرار العنوان */
+function paginate(blocks,host){
+ const pages=[];const mk=()=>{const pg=document.createElement("div");pg.className="rp-page";pg.innerHTML='<div class="rp-body"></div><div class="rp-foot"></div>';host.appendChild(pg);pages.push(pg);return pg.firstChild};
+ const over=b=>b.scrollHeight>b.clientHeight+1;let body=mk();
+ for(const b of blocks){
+  if(b.h){const el=document.createElement("div");el.innerHTML=b.h;body.appendChild(el);if(over(body)&&body.children.length>1){el.remove();body=mk();body.appendChild(el)}continue}
+  let i=0,cont=false;
+  while(i<b.rows.length||!cont){
+   const w=document.createElement("div");w.innerHTML=`<h2>${b.t}${cont?' <small style="font-weight:400;color:#64748B">(تابع)</small>':""}</h2><table>${thead(b.head)}<tbody></table>`;body.appendChild(w);
+   const tbd=w.querySelector("tbody");let added=0;
+   while(i<b.rows.length){tbd.insertAdjacentHTML("beforeend",trow(b.rows[i],b.num));if(over(body)){if(added===0&&body.children.length===1){i++;added++;continue}tbd.lastElementChild.remove();break}i++;added++}
+   cont=true;
+   if(added===0){w.remove();body=mk();continue}
+   if(i<b.rows.length)body=mk();else break}}
+ pages.forEach((pg,k)=>{pg.querySelector(".rp-foot").textContent=`ARRIVE · إدارة المراجعة التشغيلية · تقرير الميدل مايل · صفحة ${k+1} من ${pages.length}`});
+ return pages}
+function buildReport(sel,host){const D=reportData();if(!D.rs.length)return null;const pages=paginate(reportBlocks(D,sel),host);return{D,pages}}
+function selOf(){return new Set([...document.querySelectorAll("#rmd input[data-s]:checked")].map(i=>i.dataset.s))}
+function reportName(D){const ds=D.rs.map(o=>o.d).sort();return`ARRIVE_MiddleMile_Report_${ds[0]}_to_${ds[ds.length-1]}`}
+const LJ={h2c:["html2canvas.min.js","https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js","https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"],pdf:["jspdf.umd.min.js","https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js","https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"]};
+const ldS=(src,ok)=>new Promise(res=>{const e=document.createElement("script");e.src=src;e.onload=()=>res(ok());e.onerror=()=>{e.remove();res(false)};document.head.appendChild(e)});
+async function pdfLibs(){const a=()=>typeof html2canvas!=="undefined",b=()=>!!(window.jspdf&&window.jspdf.jsPDF);
+ if(!a())for(const u of LJ.h2c)if(await ldS(u,a))break;if(!b())for(const u of LJ.pdf)if(await ldS(u,b))break;return a()&&b()}
+async function downloadPdf(){
+ const btn=$("rmPdf"),old=btn.textContent;btn.disabled=true;btn.textContent="جارٍ إعداد الملف…";
+ const host=document.createElement("div");host.className="rp-off";document.body.appendChild(host);
+ try{
+  if(!(await pdfLibs())){alert("تعذّر تحميل مكتبات إنشاء PDF. تأكد من رفع الملفين html2canvas.min.js و jspdf.umd.min.js مع اللوحة أو من الاتصال بالإنترنت، أو استخدم «معاينة وطباعة» ثم «حفظ كـ PDF».");return}
+  if(document.fonts&&document.fonts.ready)await document.fonts.ready;
+  const R=buildReport(selOf(),host);if(!R){alert("لا توجد بيانات مطابقة للفلاتر الحالية");return}
+  const pdf=new window.jspdf.jsPDF({unit:"mm",format:"a4",orientation:"portrait",compress:true});
+  for(let i=0;i<R.pages.length;i++){const cv=await html2canvas(R.pages[i],{scale:2,backgroundColor:"#ffffff",useCORS:true,logging:false});
+   if(i)pdf.addPage();pdf.addImage(cv.toDataURL("image/jpeg",.92),"JPEG",0,0,210,297,undefined,"FAST")}
+  pdf.setProperties({title:"تقرير متابعة الميدل مايل",author:"ARRIVE — إدارة المراجعة التشغيلية"});
+  pdf.save(reportName(R.D)+".pdf");return true;
+ }catch(e){console.error(e);alert("تعذّر إنشاء PDF: "+e.message)}
+ finally{host.remove();btn.disabled=false;btn.textContent=old}}
+function previewReport(){
+ const old=$("rpt");if(old)old.remove();
+ const r=document.createElement("div");r.id="rpt";r.className="rpt";r.innerHTML='<div class="rp-tool"><button class="btn" id="rpd" type="button">تنزيل PDF</button><button class="btn" id="rpp" type="button">طباعة</button><button class="btn" id="rpx" type="button">إغلاق</button><span>صيغة A4</span></div><div id="rph"></div>';
+ const sel=selOf();document.body.appendChild(r);const R=buildReport(sel,$("rph"));
+ if(!R){r.remove();alert("لا توجد بيانات مطابقة للفلاتر الحالية");return}
+ closeModal();document.body.classList.add("rp-open");
+ $("rpx").onclick=()=>{r.remove();document.body.classList.remove("rp-open")};$("rpp").onclick=()=>window.print();
+ $("rpd").onclick=async()=>{r.remove();document.body.classList.remove("rp-open");openReportModal();$("rmPdf").click()}}
+function closeModal(){const m=$("rmd");if(m)m.remove()}
+function openReportModal(){
+ closeModal();const m=document.createElement("div");m.id="rmd";m.className="mdl";
+ const rs=rows();
+ m.innerHTML=`<div class="mdb" role="dialog" aria-label="إصدار التقرير"><h3>إصدار وتصدير التقرير الإداري</h3><div class="psub">يُبنى من البيانات المعروضة حاليًا (${fmt(rs.length)} سجل · ${periodTxt(rs)}) وبنفس الفلاتر</div>
+ <div class="mdl-l"><label><input type="checkbox" checked disabled> الملخص التنفيذي والمؤشرات الرئيسية (دائمًا)</label>${REPSEC.map(([k,t])=>`<label><input type="checkbox" data-s="${k}" checked> ${t}</label>`).join("")}</div>
+ <div class="mdl-a"><button class="btn pri" id="rmPdf" type="button">تنزيل PDF</button><button class="btn" id="rmPrev" type="button">معاينة وطباعة</button><button class="btn" id="rmCsv" type="button">CSV للسجلات</button><button class="btn" id="rmX" type="button">إغلاق</button></div></div>`;
+ document.body.appendChild(m);
+ $("rmPdf").onclick=async()=>{const ok=await downloadPdf();if(ok)closeModal()};
+ $("rmPrev").onclick=previewReport;$("rmCsv").onclick=()=>$("qaExport").click();$("rmX").onclick=closeModal;
+ m.addEventListener("click",e=>{if(e.target===m)closeModal()})}
 
 /* ---- العرض التقديمي PowerPoint ---- */
 const LIBS=["pptxgen.bundle.js","https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js","https://unpkg.com/pptxgenjs@3.12.0/dist/pptxgen.bundle.js","https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js"];
@@ -660,7 +722,7 @@ async function makeDeck(){
  finally{btn.disabled=false;btn.querySelector("span").textContent=old}}
 
 /* ---- ربط الأزرار ---- */
-$("hrep").onclick=openReport;$("hdeck").onclick=makeDeck;$("hcmp").onclick=toggleCmp;
+$("hrep").onclick=openReportModal;$("hexp").onclick=openReportModal;$("hdeck").onclick=makeDeck;$("hcmp").onclick=toggleCmp;
 $("hfs").onclick=()=>{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen()};
 window.__mm={st,health,computeAlerts,computeActions,reportData};
 render();
