@@ -100,6 +100,10 @@ td.n{font-family:var(--num);direction:ltr;text-align:end}
 .bar{display:inline-block;vertical-align:middle;width:70px;height:6px;border-radius:3px;background:var(--g100);margin-inline-start:8px;overflow:hidden}.bar i{display:block;height:100%;background:var(--teal-600)}
 .note{background:var(--act-bg);border:1px solid var(--act);border-radius:var(--rl);padding:14px 18px;margin-top:24px;color:var(--ink)}
 .note h3{margin:0 0 4px;font-size:14px;color:var(--act-fg)}.note ul,.panel ul{margin:6px 0 0;padding-inline-start:20px}.note li,.panel li{margin:3px 0}
+.rb{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line2)}
+.rb b{font-size:12px;color:var(--mut);margin-inline-end:4px}
+.rb .btn{height:34px}
+@media print{header.top .row:first-child,.fcard .btn,.rb,#bar{display:none!important}.tw{overflow:visible}body{background:#fff}.panel,.stub,.tw{box-shadow:none;break-inside:avoid}thead th{background:#0F172A!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 .lt thead th{background:var(--navy);cursor:pointer}
 .lt td.br{white-space:normal;min-width:260px;max-width:520px;color:var(--mut);line-height:1.7}
 .lt td.ln{font-weight:700}.lt td.n.o{color:var(--accent);font-weight:600}
@@ -121,6 +125,7 @@ svg text{font-family:var(--ar);font-size:11px;fill:var(--mut)}
 <div class="fcard"><div class="in">
  <div class="fh"><h3>عوامل التصفية <span class="tag"><span id="rc" class="num">0</span> سجل</span></h3><button class="btn" id="rs" type="button">مسح الفلاتر</button></div>
  <div class="fg" id="bar"></div><div class="af" id="af"></div>
+ <div class="rb"><b>تقارير جاهزة (حسب الفلاتر الحالية):</b><button class="btn" type="button" data-rep="fleet">خطوط الأسطول</button><button class="btn" type="button" data-rep="drivers">أداء السائقين</button><button class="btn" type="button" data-rep="vehicles">أنواع المركبات</button><button class="btn" type="button" data-rep="branches">الفروع</button><button class="btn" type="button" data-rep="rows">البيانات التفصيلية</button><button class="btn" type="button" id="prn">طباعة / PDF</button></div>
 </div></div>
 <main class="in">
  <section class="snap" id="snap"></section>
@@ -232,6 +237,28 @@ function lineTable(rs){
   const T=list.reduce((t,a)=>(t.sh+=a.sh,t.bg+=a.bg,t),{sh:0,bg:0}),nbT=new Set(rs.map(o=>o.b)).size;
   el.innerHTML=`<table><thead><tr>${C.map(c=>`<th data-k="${c[0]}">${c[1]}${SL.k===c[0]?(SL.d<0?" ▼":" ▲"):""}</th>`).join("")}</tr></thead><tbody>${list.map(a=>`<tr><td class="ln">${a.k}</td><td class="br">${[...a.br].sort((x,y)=>y[1]-x[1]).map(x=>shortB(x[0])).join("، ")} <span class="pill p-c">${a.nb}</span></td><td class="n o">${fmt(a.sh)}</td><td class="n">${fmt(a.bg)}</td><td class="n">${fmt(a.dn)}</td></tr>`).join("")}</tbody><tfoot><tr><td>الإجمالي (${fmt(list.length)} خط)</td><td>${fmt(nbT)} فرع</td><td class="n">${fmt(T.sh)}</td><td class="n">${fmt(T.bg)}</td><td></td></tr></tfoot></table>`;
   el.querySelectorAll("th").forEach(th=>th.onclick=()=>{const k=th.dataset.k;SL.d=SL.k===k?-SL.d:-1;SL.k=k;render()})}
+/* ===== التقارير الجاهزة (CSV بترميز UTF-8 يفتح مباشرة في Excel) ===== */
+function grp(rs,keyOf){const g=new Map();
+  for(const o of rs){const k=keyOf(o);let a=g.get(k);if(!a)g.set(k,a={k,sh:0,bg:0,days:new Set(),b:new Map(),dr:new Set(),vt:new Set()});
+    a.sh+=o.sh||0;a.bg+=o.bg||0;a.days.add(o.d);a.b.set(o.b,(a.b.get(o.b)||0)+(o.sh||0));a.dr.add(o.dr);a.vt.add(o.vt)}
+  return[...g.values()].sort((x,y)=>y.sh-x.sh)}
+const brs=a=>[...a.b].sort((x,y)=>y[1]-x[1]).map(x=>shortB(x[0])).join("، ");
+const NRG="غير مسجل",line=o=>[...new Set([o.vt,o.dr].filter(x=>x&&x!==NRG))].join(" – ")||NRG;
+const REP={
+ fleet:{n:"fleet_lines",h:["خط التشغيل","الفروع المغطاة","عدد الفروع","عدد الأوردرات","عدد الشوالات","أيام التشغيل"],f:rs=>grp(rs,line).map(a=>[a.k,brs(a),a.b.size,a.sh,a.bg,a.days.size])},
+ drivers:{n:"drivers",h:["السائق","أنواع المركبات","الفروع المغطاة","عدد الأوردرات","عدد الشوالات","أيام التشغيل","متوسط أوردرات/يوم"],f:rs=>grp(rs,o=>o.dr).map(a=>[a.k,[...a.vt].join("، "),brs(a),a.sh,a.bg,a.days.size,a.days.size?Math.round(a.sh/a.days.size):0])},
+ vehicles:{n:"vehicle_types",h:["نوع المركبة","السائقون","الفروع المغطاة","عدد الأوردرات","عدد الشوالات","أيام التشغيل"],f:rs=>grp(rs,o=>o.vt).map(a=>[a.k,[...a.dr].join("، "),brs(a),a.sh,a.bg,a.days.size])},
+ branches:{n:"branches",h:["الفرع","السائقون","أنواع المركبات","عدد الأوردرات","عدد الشوالات","أيام التشغيل"],f:rs=>grp(rs,o=>o.b).map(a=>[a.k,[...a.dr].join("، "),[...a.vt].join("، "),a.sh,a.bg,a.days.size])},
+ rows:{n:"detailed_rows",h:["التاريخ","الفرع","المنسق","المساعد","السائق","نوع المركبة","حالة الشحنات","عدد الأوردرات","عدد الشوالات","حالة الخروج"],f:rs=>[...rs].sort((x,y)=>x.d<y.d?-1:x.d>y.d?1:0).map(o=>[o.d,o.b,o.c,o.as_,o.dr,o.vt,o.st,o.sh==null?"":o.sh,o.bg==null?"":o.bg,ST[o.s]])}};
+const cell=v=>{let t=String(v==null?"":v);if(/^[=+\-@\t\r]/.test(t)&&isNaN(+t))t="'"+t;return /[",\n]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t};
+function dl(key){const R=REP[key],rs=rows();if(!rs.length){alert("لا توجد بيانات مطابقة للفلاتر الحالية");return}
+  const body=R.f(rs);
+  const txt="﻿"+[R.h,...body].map(r=>r.map(cell).join(",")).join("\r\n");
+  const ds=rs.map(o=>o.d).sort(),a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([txt],{type:"text/csv;charset=utf-8"}));
+  a.download=`${R.n}_${ds[0]}_to_${ds[ds.length-1]}.csv`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
+document.querySelectorAll("[data-rep]").forEach(b=>b.onclick=()=>dl(b.dataset.rep));
+document.getElementById("prn").onclick=()=>window.print();
 const tb_=document.getElementById("tb"),tc_=document.getElementById("tc"),ta_=document.getElementById("ta");
 function dqr(){const all=agg(DATA);
  dq.innerHTML=`<h3>جودة البيانات (كل الشيت، قبل الفلاتر)</h3><ul>
