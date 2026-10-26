@@ -100,6 +100,11 @@ td.n{font-family:var(--num);direction:ltr;text-align:end}
 .bar{display:inline-block;vertical-align:middle;width:70px;height:6px;border-radius:3px;background:var(--g100);margin-inline-start:8px;overflow:hidden}.bar i{display:block;height:100%;background:var(--teal-600)}
 .note{background:var(--act-bg);border:1px solid var(--act);border-radius:var(--rl);padding:14px 18px;margin-top:24px;color:var(--ink)}
 .note h3{margin:0 0 4px;font-size:14px;color:var(--act-fg)}.note ul,.panel ul{margin:6px 0 0;padding-inline-start:20px}.note li,.panel li{margin:3px 0}
+.lt thead th{background:var(--navy);cursor:pointer}
+.lt td.br{white-space:normal;min-width:260px;max-width:520px;color:var(--mut);line-height:1.7}
+.lt td.ln{font-weight:700}.lt td.n.o{color:var(--accent);font-weight:600}
+.lt tfoot td{padding:10px 14px;font-weight:700;background:var(--g100);border-top:2px solid var(--line2);white-space:nowrap}
+.lt tfoot td.n{font-family:var(--num);direction:ltr;text-align:end}
 .empty{padding:28px;text-align:center;color:var(--mut)}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:560px){.two{grid-template-columns:1fr}}
 .two h4{margin:0 0 6px;font-size:13px;color:var(--mut)}
@@ -125,6 +130,8 @@ svg text{font-family:var(--ar);font-size:11px;fill:var(--mut)}
   <div class="panel"><h3>الشحنات حسب الفرع</h3><div class="psub">أعلى 10 فروع من حيث عدد الشحنات</div><div id="c5"></div></div></div>
  <div class="g"><div class="panel"><h3>ترتيب الفروع</h3><div class="psub">أعلى 5 وأقل 5 فروع بالشحنات (الفروع التي لها شحنات فقط)</div><div class="two" id="c6"></div></div>
   <div class="panel"><h3>حالة وقت الخروج</h3><div class="psub">عدد صفوف فرع-يوم حسب ما هو مسجل في عمود وقت الخروج الفعلي</div><div id="c7"></div></div></div>
+ <div class="sh"><h2><span class="tag">أسطول</span> هيكلة أسطول سيارات النقل والقدرة الاستيعابية</h2><span class="s" id="lsub"></span></div>
+ <div class="tw lt" id="ln"></div>
  <div class="sh"><h2><span class="tag">أداء</span> أداء الفروع</h2><span class="s">اضغط على عنوان العمود للترتيب · ألوان نسبة التأخير بعتبات مبدئية (≤10% / ≤25%) غير معتمدة من SOP</span></div>
  <div class="tw" id="tb"></div>
  <div class="sh"><h2><span class="tag">فريق</span> المنسقون</h2></div><div class="tw" id="tc"></div>
@@ -143,17 +150,17 @@ const ST={ok:"مسجّل",unrec:"غير مسجّل",special:"حالة خاصة (
 const STC={ok:"var(--ok)",unrec:"var(--closed)",special:"var(--prog)",noplan:"var(--act)"};
 const IC={pkg:'<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>',bag:'<path d="M6 7h12l1 13H5z"/><path d="M9 7a3 3 0 016 0"/>',bld:'<path d="M4 21V5l8-2v18M12 9h8v12M7 9h2M7 13h2M7 17h2M15 13h2M15 17h2"/>',usr:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',usr2:'<circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-5 7-5s7 1.5 7 5M17 4.5a3.5 3.5 0 010 7M19 15c2 .7 3 2 3 5"/>',truck:'<path d="M2 6h11v10H2zM13 10h4l4 3v3h-8z"/><circle cx="6.5" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/>',clk:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',ok:'<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>'};
 const ico=n=>`<svg viewBox="0 0 24 24" aria-hidden="true">${IC[n]}</svg>`;
-const F={m:new Set(),b:new Set(),c:new Set(),s:new Set(),st:new Set(),from:"",to:"",th:15};
+const F={m:new Set(),b:new Set(),c:new Set(),dr:new Set(),vt:new Set(),s:new Set(),st:new Set(),from:"",to:"",th:15};
 const uniq=k=>[...new Set(DATA.map(o=>o[k]))];
 const ar=(a,b)=>a.localeCompare(b,"ar");
-let opts;const mkOpts=()=>opts={m:[...new Set(DATA.map(o=>o.m))].sort((a,b)=>a-b).map(x=>[x,MN[x-1]]),b:uniq("b").sort(ar).map(x=>[x,x]),c:uniq("c").sort(ar).map(x=>[x,x]),st:uniq("st").map(x=>[x,x]),s:Object.keys(ST).map(x=>[x,ST[x]])};
-const lab={m:"الشهر",b:"الفرع",c:"المنسق",st:"حالة الشحنات",s:"حالة الخروج"};
-const KEYS=["m","b","c","st","s"];
+let opts;const mkOpts=()=>opts={m:[...new Set(DATA.map(o=>o.m))].sort((a,b)=>a-b).map(x=>[x,MN[x-1]]),b:uniq("b").sort(ar).map(x=>[x,x]),c:uniq("c").sort(ar).map(x=>[x,x]),dr:uniq("dr").sort(ar).map(x=>[x,x]),vt:uniq("vt").sort(ar).map(x=>[x,x]),st:uniq("st").map(x=>[x,x]),s:Object.keys(ST).map(x=>[x,ST[x]])};
+const lab={m:"الشهر",b:"الفرع",c:"المنسق",dr:"السائق",vt:"نوع المركبة",st:"حالة الشحنات",s:"حالة الخروج"};
+const KEYS=["m","b","c","dr","vt","st","s"];
 const fmt=n=>n==null||isNaN(n)?"–":Math.round(n).toLocaleString("en-US");
 const pct=(a,b)=>b?(a/b*100).toFixed(1)+"%":"–";
 const diff=o=>o.s==="ok"?o.a-o.p:null;
 const S={b:{k:"sh",d:-1},c:{k:"sh",d:-1},a:{k:"sh",d:-1}};
-function rows(){return DATA.filter(o=>(!F.m.size||F.m.has(o.m))&&(!F.b.size||F.b.has(o.b))&&(!F.c.size||F.c.has(o.c))&&(!F.s.size||F.s.has(o.s))&&(!F.st.size||F.st.has(o.st))&&(!F.from||o.d>=F.from)&&(!F.to||o.d<=F.to))}
+function rows(){return DATA.filter(o=>(!F.m.size||F.m.has(o.m))&&(!F.b.size||F.b.has(o.b))&&(!F.c.size||F.c.has(o.c))&&(!F.dr.size||F.dr.has(o.dr))&&(!F.vt.size||F.vt.has(o.vt))&&(!F.s.size||F.s.has(o.s))&&(!F.st.size||F.st.has(o.st))&&(!F.from||o.d>=F.from)&&(!F.to||o.d<=F.to))}
 function agg(rs){const a={n:0,sh:0,bg:0,days:new Set(),meas:0,late:0,lsum:0,dsum:0,spec:0,unrec:0,noplan:0,dup:0};
  for(const o of rs){a.n++;a.sh+=o.sh||0;a.bg+=o.bg||0;if(o.sh)a.days.add(o.d+o.b);a.dup+=o.dup;
   if(o.s==="ok"){a.meas++;const d=diff(o);a.dsum+=d;if(d>F.th){a.late++;a.lsum+=d}}else if(o.s==="special")a.spec++;else if(o.s==="unrec")a.unrec++;else a.noplan++}
@@ -201,7 +208,7 @@ function render(){const rs=rows(),A=agg(rs),all=DATA.map(o=>o.d).sort();
  const stS=n=>{const r=rs.filter(o=>o.st===n);return[r.reduce((s,o)=>s+(o.sh||0),0),r.length]};
  const stc=[["في الطريق للفرع","truck","t-prog"],["intransit","clk","t-act"],["تم الاستلام فى المخزن","ok","t-ok"]].map(([n,ic,t])=>{const[v,c]=stS(n);return big("حالة: "+n,ic,fmt(v),`شحنة · ${fmt(c)} سطر`,t)}).join("");
  topk.innerHTML=big("إجمالي الشحنات","pkg",fmt(A.sh),"مجموع عمود عدد الشحنات")+big("إجمالي الأشوله","bag",fmt(A.bg),"مجموع عمود عدد الاشوله")+card("أعلى فرع (بالشحنات)","bld",tb)+card("أكبر منسق (بالشحنات)","usr",tc)+card("أكبر مساعد (بالشحنات)","usr2",ta)+stc;
- if(!rs.length){for(const id of["c1","c5","c6","c7","tb","tc","ta"])document.getElementById(id).innerHTML='<div class="empty">لا توجد نتائج مطابقة للفلاتر</div>';dqr();return}
+ if(!rs.length){for(const id of["c1","c5","c6","c7","ln","tb","tc","ta"])document.getElementById(id).innerHTML='<div class="empty">لا توجد نتائج مطابقة للفلاتر</div>';dqr();return}
  const bm=new Map();rs.forEach(o=>{(bm.get(o.m)||bm.set(o.m,[]).get(o.m)).push(o)});const ms=[...bm.keys()].sort((a,b)=>a-b);
  c1.innerHTML=cols(ms.map(m=>{const a=agg(bm.get(m));return[MN[m-1],a.sh,a.bg]}));
  const gb=new Map(),gc=new Map(),ga=new Map();rs.forEach(o=>{(gb.get(o.b)||gb.set(o.b,[]).get(o.b)).push(o);(gc.get(o.c)||gc.set(o.c,[]).get(o.c)).push(o);(ga.get(o.as_)||ga.set(o.as_,[]).get(o.as_)).push(o)});
@@ -209,7 +216,22 @@ function render(){const rs=rows(),A=agg(rs),all=DATA.map(o=>o.d).sort();
  c5.innerHTML=hbars(bs.slice(0,10));
  c6.innerHTML=`<div><h4>الأعلى</h4>${hbars(bs.slice(0,5))}</div><div><h4>الأقل</h4>${hbars(bs.slice(-5).reverse(),fmt)}</div>`;
  c7.innerHTML=hbars(Object.keys(ST).map(s=>[ST[s],rs.filter(o=>o.s===s).length,STC[s]]));
- table(tb_,gb,"الفرع",S.b,"b");table(tc_,gc,"المنسق",S.c,"c");table(ta_,ga,"المساعد",S.a,"a");dqr()}
+ lineTable(rs);table(tb_,gb,"الفرع",S.b,"b");table(tc_,gc,"المنسق",S.c,"c");table(ta_,ga,"المساعد",S.a,"a");dqr()}
+const SL={k:"sh",d:-1};
+const shortB=b=>String(b).replace(/^\s*فرع\s+/,"");
+function lineTable(rs){
+  const el=document.getElementById("ln"),g=new Map(),NR="غير مسجل";
+  rs.forEach(o=>{const k=[...new Set([o.vt,o.dr].filter(x=>x&&x!==NR))].join(" – ")||NR;
+    let a=g.get(k);if(!a)g.set(k,a={k,sh:0,bg:0,days:new Set(),br:new Map()});
+    a.sh+=o.sh||0;a.bg+=o.bg||0;a.days.add(o.d);a.br.set(o.b,(a.br.get(o.b)||0)+(o.sh||0))});
+  const list=[...g.values()];list.forEach(a=>{a.nb=a.br.size;a.dn=a.days.size});
+  list.sort((x,y)=>SL.k==="k"?ar(x.k,y.k)*(-SL.d):(y[SL.k]-x[SL.k])*(-SL.d));
+  const ds=rs.map(o=>o.d).sort(),yr=[...new Set(ds.map(d=>d.slice(0,4)))].join("/");
+  document.getElementById("lsub").textContent=`خط التشغيل = نوع المركبة – السائق · ${F.m.size?[...F.m].sort((a,b)=>a-b).map(x=>MN[x-1]).join("، ")+" "+yr:"الفترة من "+ds[0]+" إلى "+ds[ds.length-1]} · الأوردرات = مجموع عدد الشحنات · الشوالات = مجموع عدد الأشوله`;
+  const C=[["k","خط التشغيل"],["nb","الفروع المغطاة"],["sh","عدد الأوردرات"],["bg","عدد الشوالات"],["dn","أيام التشغيل"]];
+  const T=list.reduce((t,a)=>(t.sh+=a.sh,t.bg+=a.bg,t),{sh:0,bg:0}),nbT=new Set(rs.map(o=>o.b)).size;
+  el.innerHTML=`<table><thead><tr>${C.map(c=>`<th data-k="${c[0]}">${c[1]}${SL.k===c[0]?(SL.d<0?" ▼":" ▲"):""}</th>`).join("")}</tr></thead><tbody>${list.map(a=>`<tr><td class="ln">${a.k}</td><td class="br">${[...a.br].sort((x,y)=>y[1]-x[1]).map(x=>shortB(x[0])).join("، ")} <span class="pill p-c">${a.nb}</span></td><td class="n o">${fmt(a.sh)}</td><td class="n">${fmt(a.bg)}</td><td class="n">${fmt(a.dn)}</td></tr>`).join("")}</tbody><tfoot><tr><td>الإجمالي (${fmt(list.length)} خط)</td><td>${fmt(nbT)} فرع</td><td class="n">${fmt(T.sh)}</td><td class="n">${fmt(T.bg)}</td><td></td></tr></tfoot></table>`;
+  el.querySelectorAll("th").forEach(th=>th.onclick=()=>{const k=th.dataset.k;SL.d=SL.k===k?-SL.d:-1;SL.k=k;render()})}
 const tb_=document.getElementById("tb"),tc_=document.getElementById("tc"),ta_=document.getElementById("ta");
 function dqr(){const all=agg(DATA);
  dq.innerHTML=`<h3>جودة البيانات (كل الشيت، قبل الفلاتر)</h3><ul>
@@ -219,7 +241,7 @@ function dqr(){const all=agg(DATA);
  <li class="snap0">تصحيح: <b class="num">23</b> صفًا بتاريخ 18/2/2026 كانت الشحنات والأشوله فيها مقلوبة وتم تبديلها.</li>
  <li>توحيد الأسماء: دمج تسميات البحيرة والقليوبية والعاشر من رمضان والشرقية (التوني) في فرع واحد لكل منها.</li>
  <li>وقت الخروج: مقاس <b class="num">${fmt(all.meas)}</b> · غير مسجّل <b class="num">${fmt(all.unrec)}</b> · حالات خاصة <b class="num">${fmt(all.spec)}</b> · بدون موعد مخطط <b class="num">${fmt(all.noplan)}</b>.</li>
- ${SRC.live?`<li>الشيت المباشر: ${fmt(SRC.rows)} صفًا مقروءًا، ${fmt(SRC.skipped)} صفًا متجاهلًا (بدون تاريخ أو فرع).</li>`:""}<li>أعمدة السائق والوصول وعدد الشحنات التالفة فارغة في الشيت.</li></ul>`}
+ ${SRC.live?`<li>الشيت المباشر: ${fmt(SRC.rows)} صفًا مقروءًا، ${fmt(SRC.skipped)} صفًا متجاهلًا (بدون تاريخ أو فرع).</li>`:""}<li>السائق ونوع المركبة (عمودا «اسم السائق» و«نوع المركبة»): بدون سائق <b class="num">${fmt(DATA.filter(o=>o.dr==="غير مسجل").length)}</b> صف · بدون نوع مركبة <b class="num">${fmt(DATA.filter(o=>o.vt==="غير مسجل").length)}</b> صف · نوع مركبة مكتوب كرابط <b class="num">${fmt(DATA.filter(o=>o.vt==="غير محدد (رابط)").length)}</b> صف.${SRC.live?"":" اللقطة المحفوظة لا تحتوي هذين العمودين؛ تظهر بياناتهما بعد التحديث المباشر."}</li><li>أعمدة الوصول وعدد الشحنات التالفة فارغة في الشيت.</li></ul>`}
 
 /* ===== التحديث المباشر من Google Sheets ===== */
 const SHEET_ID="1lZL171c8EZ2I8exyz0ESBFyRfliq3VJenwc67QS1iGU",SHEET_TAB="Daily pickup ",AUTO_MS=300000;
@@ -233,6 +255,10 @@ function canonB(raw){const t=cl(raw);if(!t)return"";const k=nk(t);
   if(k.includes("شرقي")&&k.includes("توني"))return"فرع الشرقية (التوني)";
   return CAN.b.get(k)||t}
 const canonC=raw=>{const t=cl(raw);return t?(CAN.c.get(nk(t))||t):"غير مسجل"};
+const CD=new Map(),CV=new Map();
+const canonD=raw=>{const t=cl(raw);if(!t)return"غير مسجل";const k=nk(t);return CD.get(k)||(CD.set(k,t),t)};
+const canonV=raw=>{const t=cl(raw);if(!t)return"غير مسجل";if(/^https?:/i.test(t))return"غير محدد (رابط)";const k=nk(t);return CV.get(k)||(CV.set(k,t),t)};
+DATA.forEach(o=>{o.dr=o.dr||"غير مسجل";o.vt=o.vt||"غير مسجل"});
 const canonSt=raw=>{const t=cl(raw);return CAN.st.get(nk(t))||t};
 function csv(txt){const R=[];let r=[],f="",q=false;
   for(let i=0;i<txt.length;i++){const ch=txt[i];
@@ -250,7 +276,7 @@ function toRow(c){
   const p=hm(c[8]),raw=cl(c[9]),a=hm(raw);let s,t="";
   if(/سبت|ترانزيت|ترتنزيت|transit/i.test(raw)){s="special";t=raw}
   else if(p==null)s="noplan";else if(a==null||a===0)s="unrec";else s="ok";
-  return{d,m:mo,b,st:canonSt(c[3]),sh,bg,c:canonC(c[6]),as_:canonC(c[7]),p,a:s==="ok"?a:null,s,t,dup:0}}
+  return{d,m:mo,b,st:canonSt(c[3]),sh,bg,c:canonC(c[6]),as_:canonC(c[7]),dr:canonD(c[11]),vt:canonV(c[12]),p,a:s==="ok"?a:null,s,t,dup:0}}
 async function loadLive(){
   const base=`https://docs.google.com/spreadsheets/d/${SHEET_ID}`,urls=[`${base}/export?format=csv&_=${Date.now()}`,`${base}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_TAB)}&_=${Date.now()}`];
   let txt="",err;
@@ -265,7 +291,7 @@ const rbtn=document.getElementById("refresh"),srcchip=document.getElementById("s
 let busy=false;
 async function refresh(){if(busy)return;busy=true;rbtn.disabled=true;rbtn.classList.add("spin");rbtn.querySelector("span").textContent="جارٍ التحديث…";
   try{const{rows:r,skipped}=await loadLive();DATA=r;mkOpts();
-    const sv={m:new Set(F.m),b:new Set(F.b),c:new Set(F.c),s:new Set(F.s),st:new Set(F.st),from:F.from,to:F.to,th:F.th};
+    const sv={m:new Set(F.m),b:new Set(F.b),c:new Set(F.c),dr:new Set(F.dr),vt:new Set(F.vt),s:new Set(F.s),st:new Set(F.st),from:F.from,to:F.to,th:F.th};
     for(const k of KEYS){const ok=new Set(opts[k].map(x=>String(x[0])));F[k]=new Set([...sv[k]].filter(v=>ok.has(String(v))))}
     buildBar();df.value=F.from;dt.value=F.to;th.value=F.th;sync();
     document.body.classList.add("live");SRC.live=true;SRC.at=new Date().toLocaleTimeString("ar-EG",{hour:"2-digit",minute:"2-digit"});SRC.rows=r.length;SRC.skipped=skipped;
