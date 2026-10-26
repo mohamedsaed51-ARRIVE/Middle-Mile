@@ -170,7 +170,12 @@ svg text{font-family:var(--ar);font-size:11px;fill:var(--mut)}
 .rp-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0}.rp-kpi{border:1px solid #CBD5E1;border-radius:8px;padding:7px 9px}
 .rp-kpi b{display:block;font:700 17px 'Inter',sans-serif;direction:ltr;text-align:end}.rp-kpi span{font-size:10px;color:#475569}
 .rp-note{background:#FEF3C7;border:1px solid #F59E0B;border-radius:8px;padding:7px 10px;font-size:10.5px}
-.rp-body{height:calc(297mm - 12mm - 16mm);overflow:hidden}.rp-foot{position:absolute;bottom:7mm;inset-inline:14mm;font-size:9.5px;color:#64748B;border-top:1px solid #E2E8F0;padding-top:4px}
+.rp-head{display:flex;align-items:center;gap:12px;height:15mm;border-bottom:2px solid #0837C9;padding-bottom:6px;margin-bottom:4mm}
+.rp-logo{background:#0837C9;border-radius:6px;padding:5px 10px;display:flex;align-items:center;flex:none}.rp-logo img{height:28px;width:auto;display:block}
+.rp-hm{display:flex;flex-direction:column;line-height:1.35}.rp-hm b{font-size:12px;color:#0837C9}.rp-hm span{font-size:10px;color:#64748B}
+.rp-ht{margin-inline-start:auto;text-align:end;display:flex;flex-direction:column;line-height:1.35}.rp-ht b{font-size:13px;color:#0F172A}.rp-ht span{font-size:10px;color:#64748B}
+.rp-kpi b.t{direction:rtl;text-align:start;font:700 13px 'Cairo',sans-serif;min-height:22px}
+.rp-body{height:calc(297mm - 12mm - 16mm - 19mm);overflow:hidden}.rp-foot{position:absolute;bottom:7mm;inset-inline:14mm;font-size:9.5px;color:#64748B;border-top:1px solid #E2E8F0;padding-top:4px}
 .rp-hd{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #00C7E6;padding-bottom:8px}
 .rp-off{position:fixed;left:-10000px;top:0;direction:rtl;font-family:'Cairo',system-ui,sans-serif;color:#0F172A}.rp-off .rp-page{margin:0;box-shadow:none}
 @media print{.cbar{display:none!important}}
@@ -595,39 +600,50 @@ function reportData(){
  return{rs,S,H,AL,AC,pw,P,T,fleet:grp(rs,line),br:grp(rs,o=>o.b),dr:grp(rs,o=>o.dr).filter(a=>a.k!==NRS),vh:grp(rs,o=>o.vt).filter(a=>a.k!==NRS)}}
 const REPSEC=[["branches","أداء الفروع"],["fleet","هيكلة الأسطول وخطوط التشغيل"],["drivers","أداء السائقين"],["vehicles","أنواع المركبات"],["compare","المقارنة بالفترة السابقة"],["findings","التنبيهات والإجراءات المقترحة"]];
 const ORD=["أولًا","ثانيًا","ثالثًا","رابعًا","خامسًا","سادسًا","سابعًا","ثامنًا","تاسعًا","عاشرًا"];
+const kc=(v,l,t)=>`<div class="rp-kpi"><b${t?' class="t"':""}>${v}</b><span>${l}</span></div>`;
 const thead=h=>`<thead><tr>${h.map(x=>`<th>${x}</th>`).join("")}</tr></thead>`;
 const trow=(r,num)=>`<tr>${r.map((c,i)=>`<td class="${num&&num.includes(i)?"n":""}">${c}</td>`).join("")}</tr>`;
 /* يبني قائمة كتل: html عادي أو جدول قابل للتقسيم بين الصفحات */
 function reportBlocks(D,sel){
- const{rs,S,H,AL,AC,T,pw}=D,logo=document.querySelector(".brand img"),today=new Date().toISOString().slice(0,10),B=[],H2=t=>`<h2>${t}</h2>`;let n=0;const ord=()=>ORD[n++];
+ const{rs,S,H,AL,AC,T,pw}=D,today=new Date().toISOString().slice(0,10),B=[],H2=t=>`<h2>${t}</h2>`;let n=0;const ord=()=>ORD[n++];
  const kp=[["إجمالي الأوردرات",fmt(S.sh)],["إجمالي الشوالات",fmt(S.bg)],["أيام التشغيل",fmt(S.days)],["متوسط أوردر/يوم",fmt(S.perDay)],["فروع مشمولة",fmt(S.br)],["نسبة تسجيل الخروج",pc(S.rec)],["نسبة التأخير",pc(S.lr)],["درجة صحة التشغيل",H?H.score+" / 100":"–"]];
  const crit=AL.filter(a=>a.n&&(a.p==="crit"||a.p==="high"));
  const exec=[`خلال الفترة ${periodTxt(rs)} بلغ إجمالي الأوردرات ${fmt(S.sh)} و${fmt(S.bg)} شوال عبر ${fmt(S.br)} فرعًا و${fmt(D.fleet.length)} خط تشغيل.`,
   `نسبة تسجيل وقت الخروج ${pc(S.rec)}، ونسبة التأخير ${pc(S.lr)} من ${fmt(S.meas)} صف مقاس (حد التأخير ${F.th} دقيقة).`,
   T?`مقارنة بالفترة المماثلة السابقة (${pw.a} إلى ${pw.b}): الأوردرات ${fmt(D.P.sh)} → ${fmt(S.sh)}، ونسبة التأخير ${pc(D.P.lr)} → ${pc(S.lr)}.`:"لا توجد بيانات للفترة السابقة المماثلة داخل الشيت للمقارنة.",
   crit.length?`تنبيهات تحتاج متابعة: ${crit.map(a=>a.t.replace(/\s*\(.*\)$/,"")).join("؛ ")}.`:"لا توجد تنبيهات حرجة أو مرتفعة وفق العتبات المقترحة."];
- B.push({g:"intro",h:`<div class="rp-hd"><div><h1>تقرير متابعة الميدل مايل</h1><div class="rp-sub">الفترة: ${periodTxt(rs)} · تاريخ الإصدار: ${today}</div></div>${logo?`<img src="${logo.src}" style="height:42px;background:#0837C9;padding:6px 10px;border-radius:6px">`:""}</div>`+
-  H2(ord()+": المقدمة والهدف")+`<p>يعرض التقرير حجم الأوردرات والشوالات المنقولة بين المركز الرئيسي والفروع، والالتزام بمواعيد الخروج، وهيكلة الأسطول (خطوط التشغيل والسائقون والمركبات)، بهدف دعم قرارات الإدارة التشغيلية.</p>`+
+ B.push({g:"intro",h:`<div class="rp-hd"><div><h1>تقرير متابعة الميدل مايل — تقرير الإدارة</h1><div class="rp-sub">الفترة: ${periodTxt(rs)} · تاريخ الإصدار: ${today}</div></div></div>`+
+  H2(ord()+": الهدف من التقرير")+`<p>يعرض التقرير حجم الأوردرات والشوالات المنقولة بين المركز الرئيسي والفروع، والالتزام بمواعيد الخروج، وهيكلة الأسطول (خطوط التشغيل والسائقون والمركبات)، بهدف دعم قرارات الإدارة التشغيلية.</p>`+
   H2(ord()+": النطاق")+`<p>مصدر البيانات: شيت «le MiddMile Report 01» (ورقة Daily pickup). الفلاتر المطبقة: ${esc(filtTxt())}. السجلات: ${fmt(rs.length)} صف فرع-يوم.</p>`+
   H2(ord()+": الملخص التنفيذي")+`<ul>${exec.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`+
-  H2(ord()+": المؤشرات الرئيسية")+`<div class="rp-kpis">${kp.map(k=>`<div class="rp-kpi"><b>${k[1]}</b><span>${k[0]}</span></div>`).join("")}</div>`+
+  H2(ord()+": المؤشرات الرئيسية")+`<div class="rp-kpis">${kp.map(k=>kc(k[1],k[0])).join("")}</div>`+
   (H?`<p>تفصيل درجة الصحة (أوزان مقترحة غير معتمدة): ${H.f.map(f=>`${f.l} ${f.v==null?"غير متاح":n1(f.v)} (وزن ${Math.round(f.w*100)}%)`).join(" · ")}.</p>`:"")});
  const tb=(g,t,head,body,num)=>B.push({g,t:ord()+": "+t,head,rows:body,num});
+ const lead=(g,obj,k)=>{n=0;B.push({g,h:H2(ord()+": الهدف من التقرير")+`<p>${obj}</p><p class="rp-sub">النطاق: ${esc(filtTxt())} · الفترة ${periodTxt(rs)} · ${fmt(rs.length)} سجل فرع-يوم</p>`+H2(ord()+": المؤشرات الرئيسية")+`<div class="rp-kpis">${k.map(x=>kc(x[1],x[0],x[2])).join("")}</div>`})};
+ const worst=key=>{const g=new Map();rs.forEach(o=>{if(o[key]&&o[key]!==NRS)(g.get(o[key])||g.set(o[key],[]).get(o[key])).push(o)});return[...g].map(([k,r])=>({k,s:st(r)})).filter(x=>x.s.meas>=5&&x.s.lr!=null).sort((a,b)=>b.s.lr-a.s.lr)[0]};
+ const wb=worst("b"),wd=worst("dr"),top=(a)=>a[0],nm=(a,f)=>a?f(a):"–";
+ if(sel.has("branches"))lead("branches","متابعة حجم الأوردرات والشوالات والالتزام بموعد الخروج لكل فرع، لتحديد الفروع التي تحتاج متابعة تشغيلية.",[["فروع مشمولة",fmt(S.br)],["أعلى فرع حجمًا"+(D.br[0]?` (${fmt(D.br[0].sh)} أوردر)`:""),nm(D.br[0],a=>esc(shortB(a.k))),1],["نسبة التأخير الإجمالية",pc(S.lr)],["أعلى فرع تأخيرًا"+(wb?` (${pc(wb.s.lr)})`:""),nm(wb,a=>esc(shortB(a.k))),1]]);
  if(sel.has("branches"))tb("branches","أداء الفروع",["الفرع","الأوردرات","الشوالات","أيام التشغيل","السائقون","% التأخير","% التسجيل"],D.br.map(a=>{const s=st(rs.filter(o=>o.b===a.k));return[esc(shortB(a.k)),fmt(a.sh),fmt(a.bg),fmt(a.days.size),esc([...a.dr].join("، ")),pc(s.lr),pc(s.rec)]}),[1,2,3,5,6]);
+ if(sel.has("fleet"))lead("fleet","توضيح هيكلة أسطول النقل: خطوط التشغيل (نوع المركبة والسائق) والفروع التي يغطيها كل خط وحجم الأوردرات والشوالات المنقولة.",[["خطوط التشغيل",fmt(D.fleet.length)],["إجمالي الأوردرات",fmt(S.sh)],["إجمالي الشوالات",fmt(S.bg)],["أكبر خط تشغيل"+(D.fleet[0]?` (${fmt(D.fleet[0].sh)} أوردر)`:""),nm(D.fleet[0],a=>esc(a.k)),1]]);
  if(sel.has("fleet"))tb("fleet","هيكلة الأسطول وخطوط التشغيل",["خط التشغيل","الفروع المغطاة","الأوردرات","الشوالات","أيام التشغيل"],D.fleet.map(a=>[esc(a.k),esc(brs(a)),fmt(a.sh),fmt(a.bg),fmt(a.days.size)]),[2,3,4]);
+ if(sel.has("drivers"))lead("drivers","قياس حجم عمل السائقين والتزامهم بمواعيد الخروج، ومتابعة اكتمال تسجيل بيانات السائق.",[["سائقون مسجّلون",fmt(D.dr.length)],["أعلى سائق حجمًا"+(D.dr[0]?` (${fmt(D.dr[0].sh)} أوردر)`:""),nm(D.dr[0],a=>esc(a.k)),1],["أعلى سائق تأخيرًا"+(wd?` (${pc(wd.s.lr)})`:""),nm(wd,a=>esc(a.k)),1],["صفوف بلا سائق مسجّل",fmt(rs.filter(o=>o.dr===NRS).length)]]);
  if(sel.has("drivers"))tb("drivers","أداء السائقين",["السائق","المركبات","الفروع المغطاة","الأوردرات","الشوالات","أيام التشغيل","متوسط/يوم","% التأخير"],D.dr.map(a=>{const s=st(rs.filter(o=>o.dr===a.k));return[esc(a.k),esc([...a.vt].join("، ")),esc(brs(a)),fmt(a.sh),fmt(a.bg),fmt(a.days.size),a.days.size?fmt(a.sh/a.days.size):"–",pc(s.lr)]}),[3,4,5,6,7]);
+ if(sel.has("vehicles"))lead("vehicles","بيان توزيع الأوردرات والشوالات على أنواع المركبات، لدعم قرارات الطاقة الاستيعابية والصيانة والبدائل.",[["أنواع المركبات",fmt(D.vh.length)],["أعلى نوع حجمًا"+(D.vh[0]?` (${fmt(D.vh[0].sh)} أوردر)`:""),nm(D.vh[0],a=>esc(a.k)),1],["حصته من الأوردرات",D.vh[0]?pc(S.sh?D.vh[0].sh/S.sh*100:null):"–"],["صفوف بلا نوع مركبة",fmt(rs.filter(o=>o.vt===NRS).length)]]);
  if(sel.has("vehicles"))tb("vehicles","أنواع المركبات",["نوع المركبة","السائقون","الفروع المغطاة","الأوردرات","الشوالات","أيام التشغيل","% من الأوردرات"],D.vh.map(a=>[esc(a.k),esc([...a.dr].join("، ")),esc(brs(a)),fmt(a.sh),fmt(a.bg),fmt(a.days.size),pc(S.sh?a.sh/S.sh*100:null)]),[3,4,5,6]);
- if(sel.has("compare")){if(T)tb("compare",`المقارنة بالفترة السابقة (${pw.a} إلى ${pw.b})`,["المؤشر","السابقة","الحالية","الفرق"],T.map(x=>[x.l,cv(x.a,x.d,x.t),cv(x.b,x.d,x.t),x.df==null?"–":(x.df>0?"+":"")+(x.t==="p"?n1(x.df)+" نقطة مئوية":x.d?n1(x.df):fmt(x.df))]),[1,2,3]);
-  else B.push({g:"compare",h:H2(ord()+": المقارنة بالفترة السابقة")+"<p>لا توجد بيانات داخل الشيت للفترة السابقة المماثلة.</p>"})}
+ if(sel.has("compare")){lead("compare","مقارنة الأداء الحالي بالفترة المماثلة السابقة (بنفس الطول وبنفس الفلاتر وقواعد الحساب) لمعرفة اتجاه التغير دون الجزم بأسبابه.",T?[["الأوردرات",`${fmt(D.P.sh)} ← ${fmt(S.sh)}`],["نسبة التأخير",`${pc(D.P.lr)} ← ${pc(S.lr)}`],["نسبة تسجيل الخروج",`${pc(D.P.rec)} ← ${pc(S.rec)}`],["درجة صحة التشغيل",`${scoreOf2(D.P)==null?"–":scoreOf2(D.P)} ← ${H?H.score:"–"}`]]:[["حالة المقارنة","لا توجد بيانات للفترة السابقة",1]]);
+  if(T)tb("compare",`المقارنة بالفترة السابقة (${pw.a} إلى ${pw.b})`,["المؤشر","السابقة","الحالية","الفرق"],T.map(x=>[x.l,cv(x.a,x.d,x.t),cv(x.b,x.d,x.t),x.df==null?"–":(x.df>0?"+":"")+(x.t==="p"?n1(x.df)+" نقطة مئوية":x.d?n1(x.df):fmt(x.df))]),[1,2,3]);
+  }
  if(sel.has("findings")){const al=AL.filter(a=>a.n);
+  lead("findings","عرض التنبيهات المرصودة والإجراءات المقترحة بناءً على البيانات المعروضة، مع الجهات والمواعيد المقترحة لاعتماد الإدارة.",[["تنبيهات نشطة",fmt(al.length)],["حرجة / مرتفعة",fmt(crit.length)],["إجراءات مقترحة",fmt(AC.length)],["درجة صحة التشغيل",H?H.score+" / 100":"–"]]);
   tb("findings","التنبيهات",["الأولوية","التنبيه","العدد"],al.map(a=>[PR[a.p][0],esc(a.t),fmt(a.n)]),[2]);
   if(!al.length)B[B.length-1]={g:"findings",h:H2(B[B.length-1].t)+"<p>لا توجد تنبيهات وفق العتبات المقترحة.</p>"};
   if(AC.length)B.push({g:"findings",t:"الإجراءات المقترحة (الجهات مقترحة وغير معتمدة)",head:["م","الملاحظة","الأولوية","الإجراء المقترح","الجهة","الموعد"],rows:AC.map((a,i)=>[i+1,esc(a.d),PR[a.p][0],esc(a.t),esc(a.o),"بقرار الإدارة"]),num:[0]})}
  B.push({g:"findings",h:H2("الخاتمة")+`<p>تعكس النتائج أعلاه البيانات المسجلة في الشيت وقت الإصدار. الإجراءات والجهات المسؤولة مقترحة وتحتاج اعتماد الإدارة.</p><div class="rp-note"><b>افتراضات وقيود:</b> التأخير = وقت الخروج الفعلي − المخطط (حد ${F.th} دقيقة، غير معتمد من SOP). القيم 0:00 / 0 / - تُعامل «غير مسجّل»، والسبت/ترانزيت خارج الحساب. الصفوف المكررة (نفس اليوم والفرع) محسوبة كلها (${fmt(S.dup)} صف). خط التشغيل = نوع المركبة – السائق. أوزان درجة الصحة وعتبات التنبيه (25% / 30%) مقترحة وغير معتمدة.</div>`});
  return B}
 /* يوزّع الكتل على صفحات A4 ثابتة بالقياس الفعلي؛ كل قسم يبدأ صفحة جديدة، والجداول الطويلة تُقسَّم مع تكرار العنوان */
-function paginate(blocks,host){
- const pages=[];const mk=g=>{const pg=document.createElement("div");pg.className="rp-page";pg.dataset.grp=g;pg.innerHTML='<div class="rp-body"></div><div class="rp-foot"></div>';host.appendChild(pg);pages.push(pg);return pg.firstChild};
+function paginate(blocks,host,per){
+ const pages=[];const lg=document.querySelector(".brand img"),tn=g=>((TABS.find(t=>t[0]===g)||[0,""])[1]);
+ const mk=g=>{const pg=document.createElement("div");pg.className="rp-page";pg.dataset.grp=g;pg.innerHTML=`<div class="rp-head"><span class="rp-logo">${lg?`<img src="${lg.src}" alt="ARRIVE">`:"ARRIVE"}</span><div class="rp-hm"><b>نظام متابعة الميدل مايل</b><span>إدارة المراجعة التشغيلية</span></div><div class="rp-ht"><b>${tn(g)}</b><span>${esc(per||"")}</span></div></div><div class="rp-body"></div><div class="rp-foot"></div>`;host.appendChild(pg);pages.push(pg);return pg.querySelector(".rp-body")};
  const over=b=>b.scrollHeight>b.clientHeight+1;let body=null,cur=null;
  for(const b of blocks){
   if(b.g!==cur||!body){cur=b.g;body=mk(cur)}
@@ -644,7 +660,7 @@ function paginate(blocks,host){
  return pages}
 const TABS=[["intro","تقرير الإدارة"],["branches","أداء الفروع"],["fleet","خطوط الأسطول"],["drivers","أداء السائقين"],["vehicles","أنواع المركبات"],["compare","المقارنة بالفترة السابقة"],["findings","النتائج والتوصيات"]];
 const ALLSEC=new Set(["branches","fleet","drivers","vehicles","compare","findings"]);
-function buildReport(sel,host){const D=reportData();if(!D.rs.length)return null;const pages=paginate(reportBlocks(D,sel),host);return{D,pages}}
+function buildReport(sel,host){const D=reportData();if(!D.rs.length)return null;const pages=paginate(reportBlocks(D,sel),host,"الفترة: "+periodTxt(D.rs));return{D,pages}}
 function reportName(D){const ds=D.rs.map(o=>o.d).sort();return`ARRIVE_MiddleMile_Report_${ds[0]}_to_${ds[ds.length-1]}`}
 const LJ={h2c:["html2canvas.min.js","https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js","https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"],pdf:["jspdf.umd.min.js","https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js","https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"]};
 const ldS=(src,ok)=>new Promise(res=>{const e=document.createElement("script");e.src=src;e.onload=()=>res(ok());e.onerror=()=>{e.remove();res(false)};document.head.appendChild(e)});
