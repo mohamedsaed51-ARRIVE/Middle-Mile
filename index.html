@@ -107,8 +107,12 @@ td.n{font-family:var(--num);direction:ltr;text-align:end}
 .lt thead th{background:var(--navy);cursor:pointer}
 .lt td.br{white-space:normal;min-width:260px;max-width:520px;color:var(--mut);line-height:1.7}
 .lt td.ln{font-weight:700}.lt td.n.o{color:var(--accent);font-weight:600}
-.lt tfoot td{padding:10px 14px;font-weight:700;background:var(--g100);border-top:2px solid var(--line2);white-space:nowrap}
-.lt tfoot td.n{font-family:var(--num);direction:ltr;text-align:end}
+.tw table,.panel table,.cmp table{border:1px solid var(--line2)}
+.tw th,.tw td,.panel table th,.panel table td,.cmp table th,.cmp table td{border:1px solid var(--line2)}
+.tw thead th,.panel table thead th,.cmp thead th{border-color:rgba(255,255,255,.28)}
+tbody td{border-bottom-color:var(--line2)}
+.tw tfoot td{padding:10px 14px;font-weight:700;background:var(--accent-soft);color:var(--accent-fg);border-top:2px solid var(--accent);white-space:nowrap}
+.tw tfoot td.n{font-family:var(--num);direction:ltr;text-align:end}
 .empty{padding:28px;text-align:center;color:var(--mut)}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:560px){.two{grid-template-columns:1fr}}
 .two h4{margin:0 0 6px;font-size:13px;color:var(--mut)}
@@ -164,8 +168,9 @@ svg text{font-family:var(--ar);font-size:11px;fill:var(--mut)}
 .rp-page{position:relative;width:210mm;height:297mm;overflow:hidden;margin:16px auto;background:#fff;padding:12mm 14mm 0;box-shadow:0 4px 20px rgba(15,23,42,.25);font-size:11.5px;line-height:1.7}
 .rp-page h1{font-size:21px;margin:0 0 2px;color:#0837C9}.rp-page h2{font-size:14px;margin:14px 0 6px;color:#0837C9;border-inline-start:4px solid #00C7E6;padding-inline-start:8px}
 .rp-page .rp-sub{color:#475569;font-size:12px}.rp-page table{width:100%;border-collapse:collapse;margin:4px 0 8px;font-size:10.5px}
-.rp-page th{background:#0F172A;color:#fff;padding:5px 7px;text-align:start;font-size:10px;cursor:default;position:static;white-space:normal}
-.rp-page td{border-bottom:1px solid #E2E8F0;padding:4px 7px;white-space:normal;vertical-align:top}.rp-page td.n{text-align:end;direction:ltr;font-family:'Inter','Cairo',sans-serif}
+.rp-page table{border:1.5px solid #334155}.rp-page th{background:#0F172A;color:#fff;padding:5px 7px;text-align:start;font-size:10px;cursor:default;position:static;white-space:normal;border:1px solid #334155}
+.rp-page tr.tot td{background:#E8F7FC;font-weight:700;border-top:2px solid #0837C9;color:#062BA0}
+.rp-page td{border:1px solid #CBD5E1;padding:4px 7px;white-space:normal;vertical-align:top}.rp-page td.n{text-align:end;direction:ltr;font-family:'Inter','Cairo',sans-serif}
 .rp-page tr{break-inside:avoid}.rp-page tbody tr:nth-child(even){background:#F8FAFC}
 .rp-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0}.rp-kpi{border:1px solid #CBD5E1;border-radius:8px;padding:7px 9px}
 .rp-kpi b{display:block;font:700 17px 'Inter',sans-serif;direction:ltr;text-align:end}.rp-kpi span{font-size:10px;color:#475569}
@@ -277,12 +282,15 @@ function cols(items,w=560,h=230){const m={t:22,r:8,b:28,l:8},iw=w-m.l-m.r,ih=h-m
  let s=`<svg viewBox="0 0 ${w} ${h}" role="img"><line x1="${m.l}" x2="${w-m.r}" y1="${m.t+ih}" y2="${m.t+ih}" stroke="var(--line)"/>`;
  items.forEach((it,i)=>{const x=m.l+i*bw,hh=ih*it[1]/mx;s+=`<rect x="${x+bw*.18}" y="${m.t+ih-hh}" width="${bw*.64}" height="${hh}" rx="4" fill="var(--accent)"><title>${it[0]}: ${fmt(it[1])} شحنة · ${fmt(it[2])} أشوله</title></rect><text x="${x+bw/2}" y="${m.t+ih-hh-6}" text-anchor="middle" style="font-family:var(--num);direction:ltr">${fmt(it[1]/1000)}K</text><text x="${x+bw/2}" y="${h-8}" text-anchor="middle">${it[0]}</text>`});
  return s+"</svg>"}
+const pf=v=>v==null||isNaN(v)?"–":v.toFixed(1)+"%";
 function table(el,groups,first,sort,key){
  const list=[...groups].map(([k,rs])=>({k,...agg(rs)}));const tot=Math.max(1,...list.map(a=>a.sh));
+ const TT=agg([...groups].flatMap(([k,r])=>r)),TL=TT.meas?TT.late/TT.meas*100:-1;
+ list.forEach(a=>{a.psh=TT.sh?a.sh/TT.sh*100:0;a.pbg=TT.bg?a.bg/TT.bg*100:0});
  list.forEach(a=>{a.lr=a.meas?a.late/a.meas*100:-1;a.avgl=a.late?a.lsum/a.late:0;a.avgd=a.meas?a.dsum/a.meas:0;a.avg=a.days.size?a.sh/a.days.size:0;a.dn=a.days.size;a.nm=a.unrec+a.spec+a.noplan});
  list.sort((x,y)=>sort.k==="k"?ar(x.k,y.k)*(-sort.d):(y[sort.k]-x[sort.k])*(-sort.d));
- const C=[["k",first],["sh","الشحنات"],["bg","الأشوله"],["dn","أيام التشغيل"],["avg","متوسط شحنات/يوم"],["meas","صفوف مقاسة"],["late","متأخر"],["lr","% التأخير"],["avgl","متوسط التأخير (د)"],["avgd","متوسط الفرق (د)"],["nm","غير مقاس"]];
- el.innerHTML=`<table><thead><tr>${C.map(c=>`<th data-k="${c[0]}">${c[1]}${sort.k===c[0]?(sort.d<0?" ▼":" ▲"):""}</th>`).join("")}</tr></thead><tbody>${list.map(a=>`<tr><td>${a.k}</td><td class="n">${fmt(a.sh)}<span class="bar"><i style="width:${a.sh/tot*100}%"></i></span></td><td class="n">${fmt(a.bg)}</td><td class="n">${a.dn}</td><td class="n">${fmt(a.avg)}</td><td class="n">${a.meas}</td><td class="n">${a.late}</td><td class="n"><span class="pill ${a.lr<0?"p-c":a.lr>25?"p-bad":a.lr>10?"p-act":"p-ok"}">${a.lr<0?"–":a.lr.toFixed(1)+"%"}</span></td><td class="n">${a.late?fmt(a.avgl):"–"}</td><td class="n">${a.meas?(a.avgd>0?"+":"")+fmt(a.avgd):"–"}</td><td class="n">${a.nm}</td></tr>`).join("")}</tbody></table>`;
+ const C=[["k",first],["sh","الشحنات"],["psh","% من الشحنات"],["bg","الأشوله"],["pbg","% من الأشوله"],["dn","أيام التشغيل"],["avg","متوسط شحنات/يوم"],["meas","صفوف مقاسة"],["late","متأخر"],["lr","% التأخير"],["avgl","متوسط التأخير (د)"],["avgd","متوسط الفرق (د)"],["nm","غير مقاس"]];
+ el.innerHTML=`<table><thead><tr>${C.map(c=>`<th data-k="${c[0]}">${c[1]}${sort.k===c[0]?(sort.d<0?" ▼":" ▲"):""}</th>`).join("")}</tr></thead><tbody>${list.map(a=>`<tr><td>${a.k}</td><td class="n">${fmt(a.sh)}<span class="bar"><i style="width:${a.sh/tot*100}%"></i></span></td><td class="n">${pf(a.psh)}</td><td class="n">${fmt(a.bg)}</td><td class="n">${pf(a.pbg)}</td><td class="n">${a.dn}</td><td class="n">${fmt(a.avg)}</td><td class="n">${a.meas}</td><td class="n">${a.late}</td><td class="n"><span class="pill ${a.lr<0?"p-c":a.lr>25?"p-bad":a.lr>10?"p-act":"p-ok"}">${a.lr<0?"–":a.lr.toFixed(1)+"%"}</span></td><td class="n">${a.late?fmt(a.avgl):"–"}</td><td class="n">${a.meas?(a.avgd>0?"+":"")+fmt(a.avgd):"–"}</td><td class="n">${a.nm}</td></tr>`).join("")}</tbody><tfoot><tr><td>الإجمالي (${fmt(list.length)})</td><td class="n">${fmt(TT.sh)}</td><td class="n">100.0%</td><td class="n">${fmt(TT.bg)}</td><td class="n">100.0%</td><td class="n">${fmt(TT.days.size)}</td><td class="n">${fmt(TT.days.size?TT.sh/TT.days.size:0)}</td><td class="n">${fmt(TT.meas)}</td><td class="n">${fmt(TT.late)}</td><td class="n">${pf(TL<0?null:TL)}</td><td class="n">${TT.late?fmt(TT.lsum/TT.late):"–"}</td><td class="n">${TT.meas?(TT.dsum/TT.meas>0?"+":"")+fmt(TT.dsum/TT.meas):"–"}</td><td class="n">${fmt(TT.unrec+TT.spec+TT.noplan)}</td></tr></tfoot></table>`;
  el.querySelectorAll("th").forEach(th=>th.onclick=()=>{const k=th.dataset.k;S[key]={k,d:sort.k===k?-sort.d:-1};render()})}
 function render(){const rs=rows(),A=agg(rs),all=DATA.map(o=>o.d).sort();
  scope.textContent=`الفترة في الشيت: ${all[0]} إلى ${all[all.length-1]} · السجلات المعروضة ${fmt(rs.length)} من ${fmt(DATA.length)}`;lastd.textContent=all[all.length-1];
@@ -318,9 +326,9 @@ function lineTable(rs){
   list.sort((x,y)=>SL.k==="k"?ar(x.k,y.k)*(-SL.d):(y[SL.k]-x[SL.k])*(-SL.d));
   const ds=rs.map(o=>o.d).sort(),yr=[...new Set(ds.map(d=>d.slice(0,4)))].join("/");
   document.getElementById("lsub").textContent=`خط التشغيل = نوع المركبة – السائق · ${F.m.size?[...F.m].sort((a,b)=>a-b).map(x=>MN[x-1]).join("، ")+" "+yr:"الفترة من "+ds[0]+" إلى "+ds[ds.length-1]} · الأوردرات = مجموع عدد الشحنات · الشوالات = مجموع عدد الأشوله`;
-  const C=[["k","خط التشغيل"],["nb","الفروع المغطاة"],["sh","عدد الأوردرات"],["bg","عدد الشوالات"],["dn","أيام التشغيل"]];
-  const T=list.reduce((t,a)=>(t.sh+=a.sh,t.bg+=a.bg,t),{sh:0,bg:0}),nbT=new Set(rs.map(o=>o.b)).size;
-  el.innerHTML=`<table><thead><tr>${C.map(c=>`<th data-k="${c[0]}">${c[1]}${SL.k===c[0]?(SL.d<0?" ▼":" ▲"):""}</th>`).join("")}</tr></thead><tbody>${list.map(a=>`<tr><td class="ln">${a.k}</td><td class="br">${[...a.br].sort((x,y)=>y[1]-x[1]).map(x=>shortB(x[0])).join("، ")} <span class="pill p-c">${a.nb}</span></td><td class="n o">${fmt(a.sh)}</td><td class="n">${fmt(a.bg)}</td><td class="n">${fmt(a.dn)}</td></tr>`).join("")}</tbody><tfoot><tr><td>الإجمالي (${fmt(list.length)} خط)</td><td>${fmt(nbT)} فرع</td><td class="n">${fmt(T.sh)}</td><td class="n">${fmt(T.bg)}</td><td></td></tr></tfoot></table>`;
+  const C=[["k","خط التشغيل"],["nb","الفروع المغطاة"],["sh","عدد الأوردرات"],["psh","% من الأوردرات"],["bg","عدد الشوالات"],["pbg","% من الشوالات"],["dn","أيام التشغيل"]];
+  const T=list.reduce((t,a)=>(t.sh+=a.sh,t.bg+=a.bg,t),{sh:0,bg:0}),nbT=new Set(rs.map(o=>o.b)).size;list.forEach(a=>{a.psh=T.sh?a.sh/T.sh*100:0;a.pbg=T.bg?a.bg/T.bg*100:0});
+  el.innerHTML=`<table><thead><tr>${C.map(c=>`<th data-k="${c[0]}">${c[1]}${SL.k===c[0]?(SL.d<0?" ▼":" ▲"):""}</th>`).join("")}</tr></thead><tbody>${list.map(a=>`<tr><td class="ln">${a.k}</td><td class="br">${[...a.br].sort((x,y)=>y[1]-x[1]).map(x=>shortB(x[0])).join("، ")} <span class="pill p-c">${a.nb}</span></td><td class="n o">${fmt(a.sh)}</td><td class="n">${pf(a.psh)}</td><td class="n">${fmt(a.bg)}</td><td class="n">${pf(a.pbg)}</td><td class="n">${fmt(a.dn)}</td></tr>`).join("")}</tbody><tfoot><tr><td>الإجمالي (${fmt(list.length)} خط)</td><td>${fmt(nbT)} فرع</td><td class="n">${fmt(T.sh)}</td><td class="n">100.0%</td><td class="n">${fmt(T.bg)}</td><td class="n">100.0%</td><td class="n">${fmt(new Set(rs.filter(o=>o.sh).map(o=>o.d)).size)}</td></tr></tfoot></table>`;
   el.querySelectorAll("th").forEach(th=>th.onclick=()=>{const k=th.dataset.k;SL.d=SL.k===k?-SL.d:-1;SL.k=k;render()})}
 /* ===== التقارير الجاهزة (CSV بترميز UTF-8 يفتح مباشرة في Excel) ===== */
 function grp(rs,keyOf){const g=new Map();
@@ -421,7 +429,7 @@ mkOpts();buildBar();render();refresh();
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const n1=v=>v==null||isNaN(v)?"–":(Math.round(v*10)/10).toLocaleString("en-US");
-const pc=v=>v==null?"–":n1(v)+"%";
+const pc=v=>v==null||isNaN(v)?"–":v.toFixed(1)+"%";
 const addD=(s,n)=>{const d=new Date(s+"T00:00:00Z");d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
 const dayDiff=(a,b)=>Math.round((new Date(b+"T00:00:00Z")-new Date(a+"T00:00:00Z"))/864e5);
 const PR={crit:["حرج","p-bad"],high:["مرتفع","p-act"],med:["متوسط","p-c"],low:["منخفض","p-c"]};
@@ -528,10 +536,12 @@ function insights(rs){
 function renderInsights(rs){const I=insights(rs);$("insights").innerHTML=I.length?I.map(x=>`<div class="ac"><span class="pill ${PR[x.p][1]}">${PR[x.p][0]}</span><h4>${esc(x.t)}</h4><p>${esc(x.d)}</p><dl><dt>الدلالة: </dt><dd>${esc(x.i)}</dd></dl></div>`).join(""):'<div class="panel empty">لا توجد بيانات كافية</div>'}
 function rankTable(rs,key,title){
  const g=new Map();rs.forEach(o=>{if(o[key]&&o[key]!==NRS)(g.get(o[key])||g.set(o[key],[]).get(o[key])).push(o)});
- const L=[...g].map(([k,r])=>{const s=st(r);return{k,s,sc:scoreOf2(s)}}).filter(x=>x.s.meas>=5&&x.sc!=null).sort((a,b)=>b.sc-a.sc);
- const row=x=>`<tr><td>${esc(key==="b"?shortB(x.k):x.k)}</td><td class="n"><span class="sc" style="background:${scCol(x.sc)}">${x.sc}</span></td><td class="n">${fmt(x.s.sh)}</td><td class="n">${pc(x.s.lr)}</td><td class="n">${pc(x.s.rec)}</td></tr>`;
- const tbl=a=>`<div class="tw"><table><thead><tr><th>${title}</th><th>الدرجة</th><th>الأوردرات</th><th>% التأخير</th><th>% التسجيل</th></tr></thead><tbody>${a.map(row).join("")||'<tr><td colspan=5 class="empty">لا توجد بيانات كافية</td></tr>'}</tbody></table></div>`;
- return`<div class="panel"><h3>${title}: الأفضل والأضعف</h3><div class="psub">بحد أدنى 5 صفوف مقاسة · ${fmt(L.length)} ضمن التصنيف</div><h4 style="margin:6px 0">الأفضل 5</h4>${tbl(L.slice(0,5))}<h4 style="margin:12px 0 6px">الأضعف 5</h4>${tbl(L.length>5?L.slice(-5).reverse():[])}</div>`}
+ const TOT=rs.reduce((a,o)=>a+(o.sh||0),0);
+ const L=[...g].map(([k,r])=>{const s=st(r);return{k,r,s,sc:scoreOf2(s)}}).filter(x=>x.s.meas>=5&&x.sc!=null).sort((a,b)=>b.sc-a.sc);
+ const row=x=>`<tr><td>${esc(key==="b"?shortB(x.k):x.k)}</td><td class="n"><span class="sc" style="background:${scCol(x.sc)}">${x.sc}</span></td><td class="n">${fmt(x.s.sh)}</td><td class="n">${pc(TOT?x.s.sh/TOT*100:null)}</td><td class="n">${pc(x.s.lr)}</td><td class="n">${pc(x.s.rec)}</td></tr>`;
+ const foot=a=>{if(!a.length)return"";const U=st(a.flatMap(x=>x.r));return`<tfoot><tr><td>الإجمالي (${a.length})</td><td class="n">–</td><td class="n">${fmt(U.sh)}</td><td class="n">${pc(TOT?U.sh/TOT*100:null)}</td><td class="n">${pc(U.lr)}</td><td class="n">${pc(U.rec)}</td></tr></tfoot>`};
+ const tbl=a=>`<div class="tw"><table><thead><tr><th>${title}</th><th>الدرجة</th><th>الأوردرات</th><th>% من الأوردرات</th><th>% التأخير</th><th>% التسجيل</th></tr></thead><tbody>${a.map(row).join("")||'<tr><td colspan=6 class="empty">لا توجد بيانات كافية</td></tr>'}</tbody>${foot(a)}</table></div>`;
+ return`<div class="panel"><h3>${title}: الأفضل والأضعف</h3><div class="psub">بحد أدنى 5 صفوف مقاسة · ${fmt(L.length)} ضمن التصنيف · النسبة من إجمالي أوردرات الفلاتر الحالية</div><h4 style="margin:6px 0">الأفضل 5</h4>${tbl(L.slice(0,5))}<h4 style="margin:12px 0 6px">الأضعف 5</h4>${tbl(L.length>5?L.slice(-5).reverse():[])}</div>`}
 function renderTop(rs){$("tops").innerHTML=rankTable(rs,"b","الفروع")+rankTable(rs,"dr","السائقون")}
 function trend(rs){
  const m=new Map();rs.forEach(o=>m.set(o.d,(m.get(o.d)||0)+(o.sh||0)));const pts=[...m].sort((a,b)=>a[0]<b[0]?-1:1);
@@ -549,13 +559,14 @@ function renderCharts(rs){
 /* ---- الجدول التفصيلي ---- */
 const DT={q:"",k:"d",d:-1,p:0,N:25};
 function renderDetail(rs){
- const q=nk(DT.q),V={d:o=>o.d,b:o=>o.b,c:o=>o.c,dr:o=>o.dr,vt:o=>o.vt,sh:o=>o.sh||0,bg:o=>o.bg||0,s:o=>ST[o.s],df:o=>o.s==="ok"?diff(o):-1e9};
+ const q=nk(DT.q),V={d:o=>o.d,b:o=>o.b,c:o=>o.c,dr:o=>o.dr,vt:o=>o.vt,sh:o=>o.sh||0,psh:o=>o.sh||0,bg:o=>o.bg||0,s:o=>ST[o.s],df:o=>o.s==="ok"?diff(o):-1e9};
  let L=rs.filter(o=>!q||nk([o.b,o.c,o.as_,o.dr,o.vt,o.st].join(" ")).includes(q));
  L=[...L].sort((x,y)=>{const a=V[DT.k](x),b=V[DT.k](y);return(typeof a==="number"?a-b:String(a).localeCompare(String(b),"ar"))*-DT.d});
  const pages=Math.max(1,Math.ceil(L.length/DT.N));DT.p=Math.min(DT.p,pages-1);
- const C=[["d","التاريخ"],["b","الفرع"],["c","المنسق"],["dr","السائق"],["vt","نوع المركبة"],["sh","الأوردرات"],["bg","الشوالات"],["s","حالة الخروج"],["df","الفرق (د)"]];
+ const C=[["d","التاريخ"],["b","الفرع"],["c","المنسق"],["dr","السائق"],["vt","نوع المركبة"],["sh","الأوردرات"],["psh","% من الأوردرات"],["bg","الشوالات"],["s","حالة الخروج"],["df","الفرق (د)"]];
+ const TS=L.reduce((a,o)=>a+(o.sh||0),0),TB=L.reduce((a,o)=>a+(o.bg||0),0),dm=L.filter(o=>o.s==="ok").map(diff),dAvg=dm.length?dm.reduce((a,b)=>a+b,0)/dm.length:null;
  const sl=L.slice(DT.p*DT.N,(DT.p+1)*DT.N);
- $("det").innerHTML=`<div class="dts"><input type="search" id="dq" placeholder="بحث (فرع، منسق، سائق، مركبة)…" value="${esc(DT.q)}"><span class="tag">${fmt(L.length)} سجل</span></div><div style="overflow-x:auto"><table><thead><tr>${C.map(c=>`<th data-k="${c[0]}">${c[1]}${DT.k===c[0]?(DT.d<0?" ▼":" ▲"):""}</th>`).join("")}</tr></thead><tbody>${sl.map(o=>`<tr><td class="n">${o.d}</td><td>${esc(shortB(o.b))}</td><td>${esc(o.c)}</td><td>${esc(o.dr)}</td><td>${esc(o.vt)}</td><td class="n">${fmt(o.sh)}</td><td class="n">${fmt(o.bg)}</td><td>${ST[o.s]}</td><td class="n">${o.s==="ok"?fmt(diff(o)):"–"}</td></tr>`).join("")||'<tr><td colspan=9 class="empty">لا توجد نتائج</td></tr>'}</tbody></table></div><div class="pg"><span>صفحة ${DT.p+1} من ${pages}</span><span><button class="btn" id="pp" ${DT.p?"":"disabled"}>السابق</button> <button class="btn" id="pn" ${DT.p<pages-1?"":"disabled"}>التالي</button></span></div>`;
+ $("det").innerHTML=`<div class="dts"><input type="search" id="dq" placeholder="بحث (فرع، منسق، سائق، مركبة)…" value="${esc(DT.q)}"><span class="tag">${fmt(L.length)} سجل</span></div><div style="overflow-x:auto"><table><thead><tr>${C.map(c=>`<th data-k="${c[0]}">${c[1]}${DT.k===c[0]?(DT.d<0?" ▼":" ▲"):""}</th>`).join("")}</tr></thead><tbody>${sl.map(o=>`<tr><td class="n">${o.d}</td><td>${esc(shortB(o.b))}</td><td>${esc(o.c)}</td><td>${esc(o.dr)}</td><td>${esc(o.vt)}</td><td class="n">${fmt(o.sh)}</td><td class="n">${TS?n1((o.sh||0)/TS*100)+"%":"–"}</td><td class="n">${fmt(o.bg)}</td><td>${ST[o.s]}</td><td class="n">${o.s==="ok"?fmt(diff(o)):"–"}</td></tr>`).join("")||'<tr><td colspan=10 class="empty">لا توجد نتائج</td></tr>'}</tbody><tfoot><tr><td colspan="5">الإجمالي (كل السجلات المطابقة: ${fmt(L.length)})</td><td class="n">${fmt(TS)}</td><td class="n">${L.length?"100.0%":"–"}</td><td class="n">${fmt(TB)}</td><td></td><td class="n">${dAvg==null?"–":(dAvg>0?"+":"")+fmt(dAvg)}</td></tr></tfoot></table></div><div class="pg"><span>صفحة ${DT.p+1} من ${pages}</span><span><button class="btn" id="pp" ${DT.p?"":"disabled"}>السابق</button> <button class="btn" id="pn" ${DT.p<pages-1?"":"disabled"}>التالي</button></span></div>`;
  const q$=$("dq");q$.oninput=()=>{DT.q=q$.value;DT.p=0;renderDetail(rs);const e=$("dq");e.focus();e.setSelectionRange(e.value.length,e.value.length)};
  $("det").querySelectorAll("th").forEach(t=>t.onclick=()=>{const k=t.dataset.k;DT.d=DT.k===k?-DT.d:-1;DT.k=k;renderDetail(rs)});
  $("pp").onclick=()=>{DT.p--;renderDetail(rs)};$("pn").onclick=()=>{DT.p++;renderDetail(rs)}}
@@ -597,12 +608,12 @@ function filtTxt(){const p=[];KEYS.forEach(k=>F[k].forEach(v=>p.push(`${lab[k]}:
 function reportData(){
  const rs=rows(),S=st(rs),H=health(S),AL=computeAlerts(rs),AC=computeActions(rs,AL),pw=prevWindow(rs);
  let P=null,T=null;if(pw){const pr=inR(rows(true),pw.a,pw.b);if(pr.length){P=st(pr);T=cmpRows(P,S)}}
- return{rs,S,H,AL,AC,pw,P,T,fleet:grp(rs,line),br:grp(rs,o=>o.b),dr:grp(rs,o=>o.dr).filter(a=>a.k!==NRS),vh:grp(rs,o=>o.vt).filter(a=>a.k!==NRS)}}
+ return{rs,S,H,AL,AC,pw,P,T,fleet:grp(rs,line),br:grp(rs,o=>o.b),dr:grp(rs,o=>o.dr).filter(a=>a.k!==NRS),vh:grp(rs,o=>o.vt).filter(a=>a.k!==NRS),drAll:grp(rs,o=>o.dr),vhAll:grp(rs,o=>o.vt)}}
 const REPSEC=[["branches","أداء الفروع"],["fleet","هيكلة الأسطول وخطوط التشغيل"],["drivers","أداء السائقين"],["vehicles","أنواع المركبات"],["compare","المقارنة بالفترة السابقة"],["findings","التنبيهات والإجراءات المقترحة"]];
 const ORD=["أولًا","ثانيًا","ثالثًا","رابعًا","خامسًا","سادسًا","سابعًا","ثامنًا","تاسعًا","عاشرًا"];
 const kc=(v,l,t)=>`<div class="rp-kpi"><b${t?' class="t"':""}>${v}</b><span>${l}</span></div>`;
 const thead=h=>`<thead><tr>${h.map(x=>`<th>${x}</th>`).join("")}</tr></thead>`;
-const trow=(r,num)=>`<tr>${r.map((c,i)=>`<td class="${num&&num.includes(i)?"n":""}">${c}</td>`).join("")}</tr>`;
+const trow=(r,num,cl)=>`<tr${cl?` class="${cl}"`:""}>${r.map((c,i)=>`<td class="${num&&num.includes(i)?"n":""}">${c}</td>`).join("")}</tr>`;
 /* يبني قائمة كتل: html عادي أو جدول قابل للتقسيم بين الصفحات */
 function reportBlocks(D,sel){
  const{rs,S,H,AL,AC,T,pw}=D,today=new Date().toISOString().slice(0,10),B=[],H2=t=>`<h2>${t}</h2>`;let n=0;const ord=()=>ORD[n++];
@@ -623,21 +634,20 @@ function reportBlocks(D,sel){
  const worst=key=>{const g=new Map();rs.forEach(o=>{if(o[key]&&o[key]!==NRS)(g.get(o[key])||g.set(o[key],[]).get(o[key])).push(o)});return[...g].map(([k,r])=>({k,s:st(r)})).filter(x=>x.s.meas>=5&&x.s.lr!=null).sort((a,b)=>b.s.lr-a.s.lr)[0]};
  const wb=worst("b"),wd=worst("dr"),top=(a)=>a[0],nm=(a,f)=>a?f(a):"–";
  if(sel.has("branches"))lead("branches","متابعة حجم الأوردرات والشوالات والالتزام بموعد الخروج لكل فرع، لتحديد الفروع التي تحتاج متابعة تشغيلية.",[["فروع مشمولة",fmt(S.br)],["أعلى فرع حجمًا"+(D.br[0]?` (${fmt(D.br[0].sh)} أوردر)`:""),nm(D.br[0],a=>esc(shortB(a.k))),1],["نسبة التأخير الإجمالية",pc(S.lr)],["أعلى فرع تأخيرًا"+(wb?` (${pc(wb.s.lr)})`:""),nm(wb,a=>esc(shortB(a.k))),1]]);
- if(sel.has("branches"))tb("branches","أداء الفروع",["الفرع","الأوردرات","الشوالات","أيام التشغيل","السائقون","% التأخير","% التسجيل"],D.br.map(a=>{const s=st(rs.filter(o=>o.b===a.k));return[esc(shortB(a.k)),fmt(a.sh),fmt(a.bg),fmt(a.days.size),esc([...a.dr].join("، ")),pc(s.lr),pc(s.rec)]}),[1,2,3,5,6]);
- if(sel.has("fleet"))lead("fleet","توضيح هيكلة أسطول النقل: خطوط التشغيل (نوع المركبة والسائق) والفروع التي يغطيها كل خط وحجم الأوردرات والشوالات المنقولة.",[["خطوط التشغيل",fmt(D.fleet.length)],["إجمالي الأوردرات",fmt(S.sh)],["إجمالي الشوالات",fmt(S.bg)],["أكبر خط تشغيل"+(D.fleet[0]?` (${fmt(D.fleet[0].sh)} أوردر)`:""),nm(D.fleet[0],a=>esc(a.k)),1]]);
- if(sel.has("fleet"))tb("fleet","هيكلة الأسطول وخطوط التشغيل",["خط التشغيل","الفروع المغطاة","الأوردرات","الشوالات","أيام التشغيل"],D.fleet.map(a=>[esc(a.k),esc(brs(a)),fmt(a.sh),fmt(a.bg),fmt(a.days.size)]),[2,3,4]);
- if(sel.has("drivers"))lead("drivers","قياس حجم عمل السائقين والتزامهم بمواعيد الخروج، ومتابعة اكتمال تسجيل بيانات السائق.",[["سائقون مسجّلون",fmt(D.dr.length)],["أعلى سائق حجمًا"+(D.dr[0]?` (${fmt(D.dr[0].sh)} أوردر)`:""),nm(D.dr[0],a=>esc(a.k)),1],["أعلى سائق تأخيرًا"+(wd?` (${pc(wd.s.lr)})`:""),nm(wd,a=>esc(a.k)),1],["صفوف بلا سائق مسجّل",fmt(rs.filter(o=>o.dr===NRS).length)]]);
- if(sel.has("drivers"))tb("drivers","أداء السائقين",["السائق","المركبات","الفروع المغطاة","الأوردرات","الشوالات","أيام التشغيل","متوسط/يوم","% التأخير"],D.dr.map(a=>{const s=st(rs.filter(o=>o.dr===a.k));return[esc(a.k),esc([...a.vt].join("، ")),esc(brs(a)),fmt(a.sh),fmt(a.bg),fmt(a.days.size),a.days.size?fmt(a.sh/a.days.size):"–",pc(s.lr)]}),[3,4,5,6,7]);
- if(sel.has("vehicles"))lead("vehicles","بيان توزيع الأوردرات والشوالات على أنواع المركبات، لدعم قرارات الطاقة الاستيعابية والصيانة والبدائل.",[["أنواع المركبات",fmt(D.vh.length)],["أعلى نوع حجمًا"+(D.vh[0]?` (${fmt(D.vh[0].sh)} أوردر)`:""),nm(D.vh[0],a=>esc(a.k)),1],["حصته من الأوردرات",D.vh[0]?pc(S.sh?D.vh[0].sh/S.sh*100:null):"–"],["صفوف بلا نوع مركبة",fmt(rs.filter(o=>o.vt===NRS).length)]]);
- if(sel.has("vehicles"))tb("vehicles","أنواع المركبات",["نوع المركبة","السائقون","الفروع المغطاة","الأوردرات","الشوالات","أيام التشغيل","% من الأوردرات"],D.vh.map(a=>[esc(a.k),esc([...a.dr].join("، ")),esc(brs(a)),fmt(a.sh),fmt(a.bg),fmt(a.days.size),pc(S.sh?a.sh/S.sh*100:null)]),[3,4,5,6]);
+ const sh$=a=>pc(S.sh?a.sh/S.sh*100:null),bg$=a=>pc(S.bg?a.bg/S.bg*100:null),H100="100.0%";
+ const T$=(g,t,head,body,num,total)=>B.push({g,t:ord()+": "+t,head,rows:body,num,total});
+ if(sel.has("branches"))T$("branches","أداء الفروع",["الفرع","الأوردرات","% من الأوردرات","الشوالات","% من الشوالات","أيام التشغيل","السائقون","% التأخير","% التسجيل"],D.br.map(a=>{const s=st(rs.filter(o=>o.b===a.k));return[esc(shortB(a.k)),fmt(a.sh),sh$(a),fmt(a.bg),bg$(a),fmt(a.days.size),esc([...a.dr].join("، ")),pc(s.lr),pc(s.rec)]}),[1,2,3,4,5,7,8],["الإجمالي ("+fmt(D.br.length)+" فرع)",fmt(S.sh),H100,fmt(S.bg),H100,fmt(S.days),fmt(D.dr.length)+" سائق",pc(S.lr),pc(S.rec)]);
+ if(sel.has("fleet"))T$("fleet","هيكلة الأسطول وخطوط التشغيل",["خط التشغيل","الفروع المغطاة","الأوردرات","% من الأوردرات","الشوالات","% من الشوالات","أيام التشغيل"],D.fleet.map(a=>[esc(a.k),esc(brs(a)),fmt(a.sh),sh$(a),fmt(a.bg),bg$(a),fmt(a.days.size)]),[2,3,4,5,6],["الإجمالي ("+fmt(D.fleet.length)+" خط)",fmt(S.br)+" فرع",fmt(S.sh),H100,fmt(S.bg),H100,fmt(S.days)]);
+ if(sel.has("drivers"))T$("drivers","أداء السائقين",["السائق","المركبات","الفروع المغطاة","الأوردرات","% من الأوردرات","الشوالات","% من الشوالات","أيام التشغيل","% التأخير"],D.drAll.map(a=>{const s=st(rs.filter(o=>o.dr===a.k));return[esc(a.k),esc([...a.vt].join("، ")),esc(brs(a)),fmt(a.sh),sh$(a),fmt(a.bg),bg$(a),fmt(a.days.size),pc(s.lr)]}),[3,4,5,6,7,8],["الإجمالي ("+fmt(D.drAll.length)+")","","",fmt(S.sh),H100,fmt(S.bg),H100,fmt(S.days),pc(S.lr)]);
+ if(sel.has("vehicles"))T$("vehicles","أنواع المركبات",["نوع المركبة","السائقون","الفروع المغطاة","الأوردرات","% من الأوردرات","الشوالات","% من الشوالات","أيام التشغيل"],D.vhAll.map(a=>[esc(a.k),esc([...a.dr].join("، ")),esc(brs(a)),fmt(a.sh),sh$(a),fmt(a.bg),bg$(a),fmt(a.days.size)]),[3,4,5,6,7],["الإجمالي ("+fmt(D.vhAll.length)+")","","",fmt(S.sh),H100,fmt(S.bg),H100,fmt(S.days)]);
  if(sel.has("compare")){lead("compare","مقارنة الأداء الحالي بالفترة المماثلة السابقة (بنفس الطول وبنفس الفلاتر وقواعد الحساب) لمعرفة اتجاه التغير دون الجزم بأسبابه.",T?[["الأوردرات",`${fmt(D.P.sh)} ← ${fmt(S.sh)}`],["نسبة التأخير",`${pc(D.P.lr)} ← ${pc(S.lr)}`],["نسبة تسجيل الخروج",`${pc(D.P.rec)} ← ${pc(S.rec)}`],["درجة صحة التشغيل",`${scoreOf2(D.P)==null?"–":scoreOf2(D.P)} ← ${H?H.score:"–"}`]]:[["حالة المقارنة","لا توجد بيانات للفترة السابقة",1]]);
-  if(T)tb("compare",`المقارنة بالفترة السابقة (${pw.a} إلى ${pw.b})`,["المؤشر","السابقة","الحالية","الفرق"],T.map(x=>[x.l,cv(x.a,x.d,x.t),cv(x.b,x.d,x.t),x.df==null?"–":(x.df>0?"+":"")+(x.t==="p"?n1(x.df)+" نقطة مئوية":x.d?n1(x.df):fmt(x.df))]),[1,2,3]);
+  if(T)tb("compare",`المقارنة بالفترة السابقة (${pw.a} إلى ${pw.b})`,["المؤشر","السابقة","الحالية","الفرق المطلق","نسبة التغير"],T.map(x=>[x.l,cv(x.a,x.d,x.t),cv(x.b,x.d,x.t),x.df==null?"–":(x.df>0?"+":"")+(x.t==="p"?n1(x.df)+" نقطة مئوية":x.d?n1(x.df):fmt(x.df)),x.t==="p"||x.rel==null?"–":(x.rel>0?"+":"")+n1(x.rel)+"%"]),[1,2,3,4]);
   }
  if(sel.has("findings")){const al=AL.filter(a=>a.n);
   lead("findings","عرض التنبيهات المرصودة والإجراءات المقترحة بناءً على البيانات المعروضة، مع الجهات والمواعيد المقترحة لاعتماد الإدارة.",[["تنبيهات نشطة",fmt(al.length)],["حرجة / مرتفعة",fmt(crit.length)],["إجراءات مقترحة",fmt(AC.length)],["درجة صحة التشغيل",H?H.score+" / 100":"–"]]);
-  tb("findings","التنبيهات",["الأولوية","التنبيه","العدد"],al.map(a=>[PR[a.p][0],esc(a.t),fmt(a.n)]),[2]);
+  tb("findings","التنبيهات",["الأولوية","التنبيه","العدد","السجلات المتأثرة","% من السجلات"],al.map(a=>{const m=rs.filter(a.fn).length;return[PR[a.p][0],esc(a.t),fmt(a.n),fmt(m),pc(rs.length?m/rs.length*100:null)]}),[2,3,4]);
   if(!al.length)B[B.length-1]={g:"findings",h:H2(B[B.length-1].t)+"<p>لا توجد تنبيهات وفق العتبات المقترحة.</p>"};
-  if(AC.length)B.push({g:"findings",t:"الإجراءات المقترحة (الجهات مقترحة وغير معتمدة)",head:["م","الملاحظة","الأولوية","الإجراء المقترح","الجهة","الموعد"],rows:AC.map((a,i)=>[i+1,esc(a.d),PR[a.p][0],esc(a.t),esc(a.o),"بقرار الإدارة"]),num:[0]})}
+  if(AC.length)B.push({g:"findings",t:"الإجراءات المقترحة (الجهات مقترحة وغير معتمدة)",head:["م","الملاحظة","الأولوية","الإجراء المقترح","الجهة","% من السجلات","الموعد"],rows:AC.map((a,i)=>{const m=rs.filter(a.fn).length;return[i+1,esc(a.d),PR[a.p][0],esc(a.t),esc(a.o),pc(rs.length?m/rs.length*100:null),"بقرار الإدارة"]}),num:[0,5]})}
  B.push({g:"findings",h:H2("الخاتمة")+`<p>تعكس النتائج أعلاه البيانات المسجلة في الشيت وقت الإصدار. الإجراءات والجهات المسؤولة مقترحة وتحتاج اعتماد الإدارة.</p><div class="rp-note"><b>افتراضات وقيود:</b> التأخير = وقت الخروج الفعلي − المخطط (حد ${F.th} دقيقة، غير معتمد من SOP). القيم 0:00 / 0 / - تُعامل «غير مسجّل»، والسبت/ترانزيت خارج الحساب. الصفوف المكررة (نفس اليوم والفرع) محسوبة كلها (${fmt(S.dup)} صف). خط التشغيل = نوع المركبة – السائق. أوزان درجة الصحة وعتبات التنبيه (25% / 30%) مقترحة وغير معتمدة.</div>`});
  return B}
 /* يوزّع الكتل على صفحات A4 ثابتة بالقياس الفعلي؛ كل قسم يبدأ صفحة جديدة، والجداول الطويلة تُقسَّم مع تكرار العنوان */
@@ -648,14 +658,17 @@ function paginate(blocks,host,per){
  for(const b of blocks){
   if(b.g!==cur||!body){cur=b.g;body=mk(cur)}
   if(b.h){const el=document.createElement("div");el.innerHTML=b.h;body.appendChild(el);if(over(body)&&body.children.length>1){el.remove();body=mk(cur);body.appendChild(el)}continue}
-  let i=0,cont=false;
-  while(i<b.rows.length||!cont){
+  const R=b.total?[...b.rows,b.total]:b.rows;let i=0,cont=false;
+  while(i<R.length||!cont){
    const w=document.createElement("div");w.innerHTML=`<h2>${b.t}${cont?' <small style="font-weight:400;color:#64748B">(تابع)</small>':""}</h2><table>${thead(b.head)}<tbody></table>`;body.appendChild(w);
    const tbd=w.querySelector("tbody");let added=0;
-   while(i<b.rows.length){tbd.insertAdjacentHTML("beforeend",trow(b.rows[i],b.num));if(over(body)){if(added===0&&body.children.length===1){i++;added++;continue}tbd.lastElementChild.remove();break}i++;added++}
+   while(i<R.length){let step=1;tbd.insertAdjacentHTML("beforeend",trow(R[i],b.num,b.total&&i===R.length-1?"tot":""));
+    if(b.total&&i===R.length-2){tbd.insertAdjacentHTML("beforeend",trow(R[i+1],b.num,"tot"));step=2}
+    if(over(body)){if(added===0&&body.children.length===1){i+=step;added+=step;continue}for(let k=0;k<step;k++)tbd.lastElementChild.remove();break}
+    i+=step;added+=step}
    cont=true;
    if(added===0){w.remove();body=mk(cur);continue}
-   if(i<b.rows.length)body=mk(cur);else break}}
+   if(i<R.length)body=mk(cur);else break}}
  pages.forEach((pg,k)=>{pg.querySelector(".rp-foot").textContent=`ARRIVE · إدارة المراجعة التشغيلية · تقرير الميدل مايل · صفحة ${k+1} من ${pages.length}`});
  return pages}
 const TABS=[["intro","تقرير الإدارة"],["branches","أداء الفروع"],["fleet","خطوط الأسطول"],["drivers","أداء السائقين"],["vehicles","أنواع المركبات"],["compare","المقارنة بالفترة السابقة"],["findings","النتائج والتوصيات"]];
