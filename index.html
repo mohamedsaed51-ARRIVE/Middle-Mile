@@ -252,9 +252,10 @@ function toRow(c){
   else if(p==null)s="noplan";else if(a==null||a===0)s="unrec";else s="ok";
   return{d,m:mo,b,st:canonSt(c[3]),sh,bg,c:canonC(c[6]),as_:canonC(c[7]),p,a:s==="ok"?a:null,s,t,dup:0}}
 async function loadLive(){
-  const u=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_TAB)}&_=${Date.now()}`;
-  const res=await fetch(u,{cache:"no-store"});if(!res.ok)throw new Error("HTTP "+res.status);
-  const txt=await res.text();if(/^\s*</.test(txt))throw new Error("الشيت غير متاح للقراءة العامة");
+  const base=`https://docs.google.com/spreadsheets/d/${SHEET_ID}`,urls=[`${base}/export?format=csv&_=${Date.now()}`,`${base}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_TAB)}&_=${Date.now()}`];
+  let txt="",err;
+  for(const u of urls){try{const res=await fetch(u,{cache:"no-store"});if(!res.ok)throw new Error("HTTP "+res.status);const t=await res.text();if(/^\s*</.test(t))throw new Error("الشيت غير متاح للقراءة العامة");txt=t;break}catch(e){err=e}}
+  if(!txt)throw err||new Error("تعذّر الاتصال");
   const R=csv(txt).slice(1),out=[];let skipped=0;
   for(const c of R){if(c.every(x=>!cl(x)))continue;const o=toRow(c);o?out.push(o):skipped++}
   if(!out.length)throw new Error("لم يتم العثور على صفوف صالحة");
