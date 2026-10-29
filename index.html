@@ -391,9 +391,10 @@ function csv(txt){const R=[];let r=[],f="",q=false;
     else if(ch==="\n"||ch==="\r"){if(ch==="\r"&&txt[i+1]==="\n")i++;r.push(f);f="";R.push(r);r=[]}
     else f+=ch}
   if(f!==""||r.length){r.push(f);R.push(r)}return R}
-function hm(v){const m=String(v||"").trim().match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);return m?+m[1]*60+ +m[2]:null}
+function hm(v){const m=String(v||"").trim().match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);return m&&+m[1]<=24&&+m[2]<=59?+m[1]*60+ +m[2]:null} /* تحقق: ساعة ≤ 24 ودقيقة ≤ 59 (كان يقبل 25:99) */
 function toRow(c){
   const dm=cl(c[0]).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);const b=canonB(c[2]);if(!dm||!b)return null;
+  {const dt=new Date(Date.UTC(+dm[3],+dm[2]-1,+dm[1]));if(dt.getUTCFullYear()!==+dm[3]||dt.getUTCMonth()!==+dm[2]-1||dt.getUTCDate()!==+dm[1])return null} /* تحقق: تاريخ يوم/شهر/سنة حقيقي فقط (كان يقبل شهر 26 أو 31/02) — يُحتسب ضمن الصفوف المتجاهلة */
   const mo=+dm[2],d=`${dm[3]}-${String(mo).padStart(2,"0")}-${dm[1].padStart(2,"0")}`;
   const num=x=>{const t=cl(x).replace(/,/g,"");return t===""||isNaN(+t)?null:+t};
   let sh=num(c[4]),bg=num(c[5]);if(d==="2026-02-18"&&sh!=null&&bg!=null&&bg>sh)[sh,bg]=[bg,sh];
